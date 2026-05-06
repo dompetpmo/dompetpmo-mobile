@@ -48,6 +48,11 @@ class GoalsPage extends ConsumerWidget {
                       ),
                     ),
                     const Spacer(),
+                    const LanguageSwitcherButton(
+                      iconColor: AppColors.white,
+                      size: 22,
+                    ),
+                    const SizedBox(width: 6),
                     AppIconButtonCircle(
                       icon: Icons.add_rounded,
                       size: 34,
@@ -107,50 +112,73 @@ class GoalsPage extends ConsumerWidget {
   void _showCreateGoalDialog(BuildContext context, WidgetRef ref) {
     final name = TextEditingController();
     final target = TextEditingController();
+    final autoTopupPercent = TextEditingController(text: '10');
+    var autoTopupEnabled = false;
     showDialog<void>(
       context: context,
       builder: (ctx) {
-        return AlertDialog(
-          title: const Text('Create Goal'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: name,
-                decoration: const InputDecoration(labelText: 'Goal name'),
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              title: const Text('Create Goal'),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  TextField(
+                    controller: name,
+                    decoration: const InputDecoration(labelText: 'Goal name'),
+                  ),
+                  TextField(
+                    controller: target,
+                    keyboardType: TextInputType.number,
+                    decoration: const InputDecoration(labelText: 'Target amount'),
+                  ),
+                  const SizedBox(height: 10),
+                  SwitchListTile(
+                    contentPadding: EdgeInsets.zero,
+                    value: autoTopupEnabled,
+                    title: const Text('Auto-topup from income'),
+                    onChanged: (value) => setDialogState(() => autoTopupEnabled = value),
+                  ),
+                  TextField(
+                    controller: autoTopupPercent,
+                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    enabled: autoTopupEnabled,
+                    decoration: const InputDecoration(labelText: 'Auto-topup percent (%)'),
+                  ),
+                ],
               ),
-              TextField(
-                controller: target,
-                keyboardType: TextInputType.number,
-                decoration: const InputDecoration(labelText: 'Target amount'),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                final parsed = double.tryParse(target.text) ?? 0;
-                if (name.text.trim().isEmpty || parsed <= 0) return;
-                ref
-                    .read(goalsViewModelProvider.notifier)
-                    .addGoal(
-                      name: name.text.trim(),
-                      targetAmount: parsed,
-                      targetDateLabel: 'Dec 2026',
-                      linkedWallet: 'Main Wallet',
-                    );
-                Navigator.pop(ctx);
-              },
-              child: const Text('Save'),
-            ),
-          ],
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('Cancel'),
+                ),
+                ElevatedButton(
+                  onPressed: () {
+                    final parsed = double.tryParse(target.text) ?? 0;
+                    final percent = double.tryParse(autoTopupPercent.text) ?? 0;
+                    if (name.text.trim().isEmpty || parsed <= 0) return;
+                    ref
+                        .read(goalsViewModelProvider.notifier)
+                        .addGoal(
+                          name: name.text.trim(),
+                          targetAmount: parsed,
+                          targetDateLabel: 'Dec 2026',
+                          linkedWallet: 'Main Wallet',
+                          autoTopupEnabled: autoTopupEnabled,
+                          autoTopupPercent: autoTopupEnabled ? percent.clamp(0, 100) : 0,
+                        );
+                    Navigator.pop(ctx);
+                  },
+                  child: const Text('Save'),
+                ),
+              ],
+            );
+          },
         );
       },
     );
+    autoTopupPercent.dispose();
   }
 }
 
@@ -181,6 +209,10 @@ class _GoalCard extends ConsumerWidget {
               ),
               PopupMenuButton<String>(
                 onSelected: (v) {
+                  if (v == 'edit') {
+                    _showEditGoalDialog(context, ref, goal);
+                    return;
+                  }
                   if (v == 'delete') {
                     ref
                         .read(goalsViewModelProvider.notifier)
@@ -188,6 +220,7 @@ class _GoalCard extends ConsumerWidget {
                   }
                 },
                 itemBuilder: (context) => const [
+                  PopupMenuItem(value: 'edit', child: Text('Edit')),
                   PopupMenuItem(value: 'delete', child: Text('Delete')),
                 ],
               ),
@@ -214,6 +247,16 @@ class _GoalCard extends ConsumerWidget {
             'Milestone: ${(goal.progress * 100).toStringAsFixed(0)}% • Weekly suggestion ${formatHomeRupiah(weeklySuggestion)}',
             style: AppTextStyles.caption,
           ),
+          if (goal.autoTopupEnabled) ...[
+            const SizedBox(height: 6),
+            Text(
+              'Auto-topup: ${goal.autoTopupPercent.toStringAsFixed(0)}% from each income',
+              style: AppTextStyles.caption.copyWith(
+                color: AppColors.accentAction,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ],
           const SizedBox(height: 10),
           Row(
             children: [
@@ -253,6 +296,15 @@ class _HabitRow extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return Row(
       children: [
+        Switch(
+          value: challenge.active,
+          onChanged: (value) async {
+            await ref.read(habitViewModelProvider.notifier).toggleActive(
+              challenge.id,
+              value,
+            );
+          },
+        ),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,15 +324,127 @@ class _HabitRow extends ConsumerWidget {
           ),
         ),
         IconButton(
-          onPressed: () {
+          onPressed: challenge.active
+              ? () {
             ref
                 .read(habitViewModelProvider.notifier)
                 .incrementProgress(challenge.id);
-          },
+          }
+              : null,
           icon: const Icon(Icons.add_circle_outline_rounded),
           color: AppColors.accentAction,
         ),
       ],
     );
   }
+}
+
+Future<void> _showEditGoalDialog(
+  BuildContext context,
+  WidgetRef ref,
+  GoalData goal,
+) async {
+  final nameController = TextEditingController(text: goal.name);
+  final targetController = TextEditingController(
+    text: goal.targetAmount.toStringAsFixed(0),
+  );
+  final autoTopupPercentController = TextEditingController(
+    text: goal.autoTopupPercent.toStringAsFixed(0),
+  );
+  var autoTopupEnabled = goal.autoTopupEnabled;
+  var saving = false;
+
+  await showDialog<void>(
+    context: context,
+    builder: (ctx) {
+      return StatefulBuilder(
+        builder: (ctx, setLocalState) {
+          return AlertDialog(
+            title: const Text('Edit Goal'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: nameController,
+                  decoration: const InputDecoration(labelText: 'Goal name'),
+                ),
+                TextField(
+                  controller: targetController,
+                  keyboardType: TextInputType.number,
+                  decoration: const InputDecoration(labelText: 'Target amount'),
+                ),
+                const SizedBox(height: 10),
+                SwitchListTile(
+                  contentPadding: EdgeInsets.zero,
+                  value: autoTopupEnabled,
+                  title: const Text('Auto-topup from income'),
+                  onChanged: (value) => setLocalState(() => autoTopupEnabled = value),
+                ),
+                TextField(
+                  controller: autoTopupPercentController,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  enabled: autoTopupEnabled,
+                  decoration: const InputDecoration(labelText: 'Auto-topup percent (%)'),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(
+                onPressed: saving ? null : () => Navigator.of(ctx).pop(),
+                child: const Text('Cancel'),
+              ),
+              FilledButton(
+                onPressed: saving
+                    ? null
+                    : () async {
+                        final target = double.tryParse(targetController.text.trim());
+                        final autoTopupPercent =
+                            double.tryParse(autoTopupPercentController.text.trim()) ?? 0;
+                        if (nameController.text.trim().isEmpty ||
+                            target == null ||
+                            target <= 0) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Invalid goal input.')),
+                          );
+                          return;
+                        }
+                        setLocalState(() => saving = true);
+                        try {
+                          await ref
+                              .read(goalsViewModelProvider.notifier)
+                              .editGoal(
+                                goal.id,
+                                name: nameController.text.trim(),
+                                targetAmount: target,
+                                autoTopupEnabled: autoTopupEnabled,
+                                autoTopupPercent: autoTopupEnabled
+                                    ? autoTopupPercent.clamp(0, 100)
+                                    : 0,
+                              );
+                          if (ctx.mounted) {
+                            Navigator.of(ctx).pop();
+                          }
+                        } catch (_) {
+                          if (!context.mounted) return;
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            const SnackBar(content: Text('Failed to update goal.')),
+                          );
+                        } finally {
+                          if (ctx.mounted) {
+                            setLocalState(() => saving = false);
+                          }
+                        }
+                      },
+                child: Text(saving ? 'Saving...' : 'Save'),
+              ),
+            ],
+          );
+        },
+      );
+    },
+  );
+
+  nameController.dispose();
+  targetController.dispose();
+  autoTopupPercentController.dispose();
 }

@@ -10,9 +10,14 @@ import 'package:confindant/features/analytics/presentation/widgets/analytics_for
 import 'package:flutter/material.dart';
 
 class AnalyticsDonutBreakdownCard extends StatelessWidget {
-  const AnalyticsDonutBreakdownCard({super.key, required this.slices});
+  const AnalyticsDonutBreakdownCard({
+    super.key,
+    required this.slices,
+    this.title = 'Category Breakdown',
+  });
 
   final List<AnalyticsCategorySlice> slices;
+  final String title;
 
   @override
   Widget build(BuildContext context) {
@@ -24,7 +29,7 @@ class AnalyticsDonutBreakdownCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Category Breakdown',
+            title,
             style: AppTextStyles.sectionTitle.copyWith(fontSize: 18),
           ),
           const SizedBox(height: AppSpacing.md),

@@ -14,11 +14,13 @@ class HomeRecentTransactionsCard extends StatelessWidget {
     required this.items,
     this.onSeeAllTap,
     this.onDeleteTap,
+    this.onEditTap,
   });
 
   final List<HomeTransactionItem> items;
   final VoidCallback? onSeeAllTap;
   final ValueChanged<HomeTransactionItem>? onDeleteTap;
+  final ValueChanged<HomeTransactionItem>? onEditTap;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +37,11 @@ class HomeRecentTransactionsCard extends StatelessWidget {
           ),
           const SizedBox(height: AppSpacing.sm),
           for (var i = 0; i < items.length; i++) ...[
-            _TransactionRow(item: items[i], onDeleteTap: onDeleteTap),
+            _TransactionRow(
+              item: items[i],
+              onDeleteTap: onDeleteTap,
+              onEditTap: onEditTap,
+            ),
             if (i != items.length - 1) const Divider(height: 18),
           ],
         ],
@@ -45,10 +51,11 @@ class HomeRecentTransactionsCard extends StatelessWidget {
 }
 
 class _TransactionRow extends StatelessWidget {
-  const _TransactionRow({required this.item, this.onDeleteTap});
+  const _TransactionRow({required this.item, this.onDeleteTap, this.onEditTap});
 
   final HomeTransactionItem item;
   final ValueChanged<HomeTransactionItem>? onDeleteTap;
+  final ValueChanged<HomeTransactionItem>? onEditTap;
 
   @override
   Widget build(BuildContext context) {
@@ -87,6 +94,39 @@ class _TransactionRow extends StatelessWidget {
                   fontSize: 11,
                 ),
               ),
+              if (item.tags.isNotEmpty)
+                Text(
+                  item.tags.join(' • '),
+                  style: AppTextStyles.caption.copyWith(
+                    color: AppColors.textSecondary,
+                    fontSize: 10,
+                  ),
+                ),
+              if (item.aiSuggested)
+                Text(
+                  'AI suggested${item.aiProvider == null ? '' : ' • ${item.aiProvider}'}',
+                  style: AppTextStyles.caption.copyWith(
+                    color: const Color(0xFF1D4ED8),
+                    fontSize: 10,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              const SizedBox(height: 4),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: item.isExpense ? const Color(0xFFFEF2F2) : const Color(0xFFF0FDF4),
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Text(
+                  item.isExpense ? 'OUT' : 'IN',
+                  style: AppTextStyles.caption.copyWith(
+                    color: amountColor,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 10,
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -100,6 +140,12 @@ class _TransactionRow extends StatelessWidget {
               fontWeight: FontWeight.w700,
             ),
           ),
+        ),
+        IconButton(
+          tooltip: 'Edit transaction',
+          icon: const Icon(Icons.edit_outlined, size: 18),
+          color: AppColors.accentAction,
+          onPressed: onEditTap == null ? null : () => onEditTap!(item),
         ),
         IconButton(
           tooltip: 'Delete transaction',

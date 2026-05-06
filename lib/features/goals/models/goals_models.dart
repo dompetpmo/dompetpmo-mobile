@@ -20,6 +20,8 @@ class GoalData {
     required this.currentAmount,
     required this.targetDateLabel,
     required this.linkedWallet,
+    required this.autoTopupEnabled,
+    required this.autoTopupPercent,
     required this.contributions,
   });
 
@@ -29,6 +31,8 @@ class GoalData {
   final double currentAmount;
   final String targetDateLabel;
   final String linkedWallet;
+  final bool autoTopupEnabled;
+  final double autoTopupPercent;
   final List<GoalContribution> contributions;
 
   double get progress {
@@ -43,6 +47,8 @@ class GoalData {
     double? currentAmount,
     String? targetDateLabel,
     String? linkedWallet,
+    bool? autoTopupEnabled,
+    double? autoTopupPercent,
     List<GoalContribution>? contributions,
   }) {
     return GoalData(
@@ -52,6 +58,8 @@ class GoalData {
       currentAmount: currentAmount ?? this.currentAmount,
       targetDateLabel: targetDateLabel ?? this.targetDateLabel,
       linkedWallet: linkedWallet ?? this.linkedWallet,
+      autoTopupEnabled: autoTopupEnabled ?? this.autoTopupEnabled,
+      autoTopupPercent: autoTopupPercent ?? this.autoTopupPercent,
       contributions: contributions ?? this.contributions,
     );
   }

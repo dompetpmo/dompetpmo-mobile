@@ -15,13 +15,38 @@ class HomeViewModel extends StateNotifier<HomeScreenState> {
   final HomeDataSource _dataSource;
 
   Future<void> load() async {
+    await _loadFiltered(
+      transactionTag: state.transactionTag,
+      transactionQuery: state.transactionQuery,
+    );
+  }
+
+  Future<void> applyTransactionQuickFilter({
+    String? tag,
+    String? query,
+  }) async {
+    await _loadFiltered(
+      transactionTag: tag ?? state.transactionTag,
+      transactionQuery: query ?? state.transactionQuery,
+    );
+  }
+
+  Future<void> _loadFiltered({
+    required String transactionTag,
+    required String transactionQuery,
+  }) async {
     try {
-      final data = await _dataSource.fetch();
+      final data = await _dataSource.fetch(
+        transactionTag: transactionTag,
+        transactionQuery: transactionQuery,
+      );
       final isEmpty =
           data.recentTransactions.isEmpty && data.budgetItems.isEmpty;
       state = state.copyWith(
         data: data,
         uiState: isEmpty ? HomeUiState.empty : HomeUiState.loaded,
+        transactionTag: transactionTag,
+        transactionQuery: transactionQuery,
         clearError: true,
       );
     } catch (_) {

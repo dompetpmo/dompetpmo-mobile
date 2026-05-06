@@ -52,19 +52,55 @@ class AnalyticsBudgetItem {
   }
 }
 
+class BudgetRecommendationItem {
+  const BudgetRecommendationItem({
+    required this.category,
+    required this.currentLimit,
+    required this.recommendedLimit,
+    required this.used,
+    required this.priority,
+    required this.reason,
+    this.simulationChangePercent,
+    this.simulationSavingImpact,
+    this.simulationLimit,
+  });
+
+  final String category;
+  final double currentLimit;
+  final double recommendedLimit;
+  final double used;
+  final String priority;
+  final String reason;
+  final double? simulationChangePercent;
+  final double? simulationSavingImpact;
+  final double? simulationLimit;
+}
+
 class AnalyticsLoadedData {
   const AnalyticsLoadedData({
     required this.summary,
     required this.categoryBreakdown,
+    required this.incomeBreakdown,
     required this.trendPoints,
+    required this.incomeTrendPoints,
+    required this.netFlowTrend,
     required this.budgetProgress,
+    required this.budgetRecommendations,
+    required this.comparison,
+    required this.anomaly,
     required this.insightText,
   });
 
   final AnalyticsSummaryData summary;
   final List<AnalyticsCategorySlice> categoryBreakdown;
+  final List<AnalyticsCategorySlice> incomeBreakdown;
   final List<AnalyticsTrendPoint> trendPoints;
+  final List<AnalyticsTrendPoint> incomeTrendPoints;
+  final List<AnalyticsTrendPoint> netFlowTrend;
   final List<AnalyticsBudgetItem> budgetProgress;
+  final List<BudgetRecommendationItem> budgetRecommendations;
+  final Map<String, dynamic> comparison;
+  final Map<String, dynamic> anomaly;
   final String insightText;
 }
 

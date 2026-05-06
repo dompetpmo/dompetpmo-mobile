@@ -4,6 +4,7 @@ import 'package:confindant/app/theme/app_radius.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
 import 'package:confindant/features/wallet/presentation/view_models/wallet_view_model.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -28,6 +29,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -46,13 +48,18 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
                     Row(
                       children: [
                         Text(
-                          'Add New Wallet',
+                          l10n.addWalletTitle,
                           style: AppTextStyles.sectionTitle.copyWith(
                             fontSize: 24,
                             height: 32 / 24,
                           ),
                         ),
                         const Spacer(),
+                        const LanguageSwitcherButton(
+                          iconColor: AppColors.accentAction,
+                          size: 22,
+                        ),
+                        const SizedBox(width: 4),
                         IconButton(
                           onPressed: context.pop,
                           icon: const Icon(
@@ -65,7 +72,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Wallet Name',
+                      l10n.addWalletWalletName,
                       style: AppTextStyles.label.copyWith(
                         fontSize: 14,
                         color: const Color(0xFF364153),
@@ -79,7 +86,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
                         fontSize: 16,
                       ),
                       decoration: InputDecoration(
-                        hintText: 'e.g., Savings, Business',
+                        hintText: l10n.addWalletWalletNameHint,
                         contentPadding: const EdgeInsets.symmetric(
                           horizontal: 16,
                           vertical: 12,
@@ -96,7 +103,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
                     ),
                     const SizedBox(height: 16),
                     Text(
-                      'Color',
+                      l10n.addWalletColor,
                       style: AppTextStyles.label.copyWith(
                         fontSize: 14,
                         color: const Color(0xFF364153),
@@ -134,7 +141,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
                     ),
                     const SizedBox(height: 16),
                     AppPrimaryButton(
-                      label: 'Create Wallet',
+                      label: l10n.addWalletCreateButton,
                       isLoading: _loading,
                       onPressed: _loading ? null : _submit,
                     ),
@@ -149,6 +156,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
   }
 
   Future<void> _submit() async {
+    final l10n = AppLocalizations.of(context)!;
     final name = _nameController.text.trim();
     if (name.isEmpty) return;
 
@@ -167,7 +175,7 @@ class _AddWalletPageState extends ConsumerState<AddWalletPage> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Failed to create wallet.')));
+      ).showSnackBar(SnackBar(content: Text(l10n.addWalletCreateFailed)));
     } finally {
       if (mounted) setState(() => _loading = false);
     }

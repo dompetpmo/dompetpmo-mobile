@@ -1,5 +1,6 @@
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
+import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/profile/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -65,24 +66,14 @@ class AboutPage extends ConsumerWidget {
                   label: 'Privacy Policy',
                   subtitle: 'How we handle your data',
                   icon: Icons.privacy_tip_outlined,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Open Privacy Policy (mock).'),
-                      ),
-                    );
-                  },
+                  onTap: () => _showLegal(context, ref, isPrivacy: true),
                 ),
                 const Divider(height: 1),
                 SettingsActionTile(
                   label: 'Terms of Service',
                   subtitle: 'Usage terms and conditions',
                   icon: Icons.description_outlined,
-                  onTap: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Open Terms (mock).')),
-                    );
-                  },
+                  onTap: () => _showLegal(context, ref, isPrivacy: false),
                 ),
                 const Divider(height: 1),
                 SettingsActionTile(
@@ -99,5 +90,38 @@ class AboutPage extends ConsumerWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showLegal(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool isPrivacy,
+  }) async {
+    try {
+      final legal = isPrivacy
+          ? await ref.read(backendApiServiceProvider).privacyPolicy()
+          : await ref.read(backendApiServiceProvider).termsOfService();
+      if (!context.mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: Text(legal['title']?.toString() ?? 'Legal'),
+          content: SingleChildScrollView(
+            child: Text(legal['content']?.toString() ?? '-'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(ctx).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        ),
+      );
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Failed to load legal content.')));
+    }
   }
 }

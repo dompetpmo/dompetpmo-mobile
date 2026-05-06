@@ -2,12 +2,14 @@ import 'package:confindant/app/router/route_paths.dart';
 import 'package:confindant/app/widgets/app_primary_button.dart';
 import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/features/profile/about_page.dart';
+import 'package:confindant/features/profile/ai_ocr_health_page.dart';
 import 'package:confindant/features/profile/change_password_page.dart';
 import 'package:confindant/features/profile/help_center_page.dart';
 import 'package:confindant/features/profile/notifications_page.dart';
 import 'package:confindant/features/profile/personal_info_page.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/profile/profile_page.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -43,6 +45,10 @@ void main() {
           builder: (context, state) => const AboutPage(),
         ),
         GoRoute(
+          path: RoutePaths.profileAiOcrHealth,
+          builder: (context, state) => const AiOcrHealthPage(),
+        ),
+        GoRoute(
           path: RoutePaths.login,
           builder: (context, state) =>
               const Scaffold(body: Center(child: Text('Login Page'))),
@@ -60,7 +66,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp.router(routerConfig: buildProfileRouter()),
+        child: MaterialApp.router(
+          routerConfig: buildProfileRouter(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -89,9 +99,17 @@ void main() {
     await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
     await tester.pumpAndSettle();
 
+    await tester.ensureVisible(find.text('About Confindant'));
     await tester.tap(find.text('About Confindant'));
     await tester.pumpAndSettle();
     expect(find.text('App info and legal references'), findsOneWidget);
+    await tester.tap(find.byIcon(Icons.arrow_back_ios_new_rounded));
+    await tester.pumpAndSettle();
+
+    await tester.ensureVisible(find.text('AI/OCR Health'));
+    await tester.tap(find.text('AI/OCR Health'));
+    await tester.pumpAndSettle();
+    expect(find.text('Internal quality metrics'), findsOneWidget);
   });
 
   testWidgets('logout shows sheet then redirects and clears auth', (
@@ -105,7 +123,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: MaterialApp.router(routerConfig: buildProfileRouter()),
+        child: MaterialApp.router(
+          routerConfig: buildProfileRouter(),
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -132,7 +154,11 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: NotificationsPage()),
+        child: const MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: NotificationsPage(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -148,13 +174,19 @@ void main() {
     tester,
   ) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: ChangePasswordPage())),
+      const ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: ChangePasswordPage(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
 
     await tester.tap(find.widgetWithText(AppPrimaryButton, 'Update Password'));
     await tester.pumpAndSettle();
-    expect(find.text('Password updated (mock).'), findsNothing);
+    expect(find.textContaining('Password updated'), findsNothing);
 
     await tester.enterText(find.byType(TextField).at(0), 'CurrentPass1!');
     await tester.enterText(find.byType(TextField).at(1), 'NewStrong1!');
@@ -163,19 +195,31 @@ void main() {
 
     await tester.tap(find.widgetWithText(AppPrimaryButton, 'Update Password'));
     await tester.pumpAndSettle();
-    expect(find.text('Password updated (mock).'), findsOneWidget);
+    expect(find.byType(SnackBar), findsOneWidget);
   });
 
   testWidgets('help center and about render main sections', (tester) async {
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: HelpCenterPage())),
+      const ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: HelpCenterPage(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('FAQ'), findsOneWidget);
     expect(find.text('Contact Support'), findsOneWidget);
 
     await tester.pumpWidget(
-      const ProviderScope(child: MaterialApp(home: AboutPage())),
+      const ProviderScope(
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: AboutPage(),
+        ),
+      ),
     );
     await tester.pumpAndSettle();
     expect(find.text('App Identity'), findsOneWidget);

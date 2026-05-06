@@ -5,25 +5,23 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final goalsViewModelProvider =
     StateNotifierProvider<GoalsViewModel, List<GoalData>>((ref) {
       final dataSource = ref.watch(goalsDataSourceProvider);
-      final initial = dataSource is MockGoalsDataSource
-          ? dataSource.seedData.goals
-          : const <GoalData>[];
-      return GoalsViewModel(dataSource, initialGoals: initial);
+      return GoalsViewModel(dataSource);
     });
 
 class GoalsViewModel extends StateNotifier<List<GoalData>> {
-  GoalsViewModel(this._dataSource, {List<GoalData> initialGoals = const []})
-    : super(initialGoals) {
-    if (initialGoals.isEmpty) {
-      _load();
-    }
+  GoalsViewModel(this._dataSource) : super(const []) {
+    _load();
   }
 
   final GoalsDataSource _dataSource;
 
   Future<void> _load() async {
-    final seed = await _dataSource.fetch();
-    state = seed.goals;
+    try {
+      final seed = await _dataSource.fetch();
+      state = seed.goals;
+    } catch (_) {
+      state = const [];
+    }
   }
 
   Future<void> addGoal({
@@ -31,34 +29,41 @@ class GoalsViewModel extends StateNotifier<List<GoalData>> {
     required double targetAmount,
     required String targetDateLabel,
     required String linkedWallet,
+    bool autoTopupEnabled = false,
+    double autoTopupPercent = 0,
   }) async {
     final created = await _dataSource.createGoal(
       name: name,
       targetAmount: targetAmount,
       targetDateLabel: targetDateLabel,
       linkedWallet: linkedWallet,
+      autoTopupEnabled: autoTopupEnabled,
+      autoTopupPercent: autoTopupPercent,
     );
     state = [...state, created];
   }
 
-  void editGoal(
+  Future<void> editGoal(
     String id, {
     String? name,
     double? targetAmount,
     String? targetDateLabel,
     String? linkedWallet,
-  }) {
+    bool? autoTopupEnabled,
+    double? autoTopupPercent,
+  }) async {
+    final updated = await _dataSource.updateGoal(
+      id: id,
+      name: name,
+      targetAmount: targetAmount,
+      targetDateLabel: targetDateLabel,
+      linkedWallet: linkedWallet,
+      autoTopupEnabled: autoTopupEnabled,
+      autoTopupPercent: autoTopupPercent,
+    );
     state = [
       for (final g in state)
-        if (g.id == id)
-          g.copyWith(
-            name: name,
-            targetAmount: targetAmount,
-            targetDateLabel: targetDateLabel,
-            linkedWallet: linkedWallet,
-          )
-        else
-          g,
+        if (g.id == id) updated else g,
     ];
   }
 

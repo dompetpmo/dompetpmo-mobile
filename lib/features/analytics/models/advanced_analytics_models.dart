@@ -1,3 +1,5 @@
+import 'package:confindant/features/analytics/models/analytics_models.dart';
+
 enum AnalyticsCompareMode { weekOverWeek, monthOverMonth }
 
 class AnalyticsFilter {
@@ -5,12 +7,14 @@ class AnalyticsFilter {
     required this.fromDateLabel,
     required this.toDateLabel,
     required this.wallet,
+    required this.walletId,
     required this.category,
   });
 
   final String fromDateLabel;
   final String toDateLabel;
   final String wallet;
+  final String walletId;
   final String category;
 
   factory AnalyticsFilter.initial() {
@@ -18,6 +22,7 @@ class AnalyticsFilter {
       fromDateLabel: '2026-03-01',
       toDateLabel: '2026-03-31',
       wallet: 'All Wallets',
+      walletId: '',
       category: 'All Categories',
     );
   }
@@ -26,12 +31,14 @@ class AnalyticsFilter {
     String? fromDateLabel,
     String? toDateLabel,
     String? wallet,
+    String? walletId,
     String? category,
   }) {
     return AnalyticsFilter(
       fromDateLabel: fromDateLabel ?? this.fromDateLabel,
       toDateLabel: toDateLabel ?? this.toDateLabel,
       wallet: wallet ?? this.wallet,
+      walletId: walletId ?? this.walletId,
       category: category ?? this.category,
     );
   }
@@ -66,10 +73,17 @@ class AnomalyInsight {
 enum ExportFormat { csv, pdf }
 
 class ExportRequest {
-  const ExportRequest({required this.format, required this.filter});
+  const ExportRequest({
+    required this.format,
+    required this.filter,
+    required this.data,
+    required this.period,
+  });
 
   final ExportFormat format;
   final AnalyticsFilter filter;
+  final AnalyticsLoadedData data;
+  final AnalyticsPeriod period;
 }
 
 class ExportResult {

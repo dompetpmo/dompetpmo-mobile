@@ -5,6 +5,7 @@ import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
 import 'package:confindant/core/constants/app_providers.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -29,6 +30,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Future<void> _signIn() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => loading = true);
     final ok = await ref
         .read(authControllerProvider.notifier)
@@ -45,7 +47,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
     }
 
     final message =
-        ref.read(authControllerProvider).errorMessage ?? 'Login gagal';
+        ref.read(authControllerProvider).errorMessage ?? l10n.authLoginFailed;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
@@ -53,6 +55,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppGradientScaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -66,6 +69,14 @@ class _LoginPageState extends ConsumerState<LoginPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: LanguageSwitcherButton(
+                      iconColor: AppColors.accentAction,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Container(
                     width: 80,
                     height: 80,
@@ -84,7 +95,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Welcome Back',
+                    l10n.loginWelcomeBack,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.screenTitle,
                   ),
@@ -92,8 +103,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   Text.rich(
                     TextSpan(
                       style: AppTextStyles.body.copyWith(fontSize: 16),
-                      children: const [
-                        TextSpan(text: 'Sign in to continue to Con'),
+                      children: [
+                        TextSpan(text: l10n.loginSubtitlePrefix),
                         TextSpan(
                           text: 'findant',
                           style: TextStyle(color: AppColors.accentAction),
@@ -105,8 +116,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   const SizedBox(height: AppSpacing.xl),
                   AppTextField(
                     controller: emailController,
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: l10n.loginEmail,
+                    hintText: l10n.loginEmailHint,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     prefixIcon: const Icon(
@@ -117,8 +128,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   const SizedBox(height: AppSpacing.md),
                   AppPasswordField(
                     controller: passwordController,
-                    labelText: 'Password',
-                    hintText: 'Enter your password',
+                    labelText: l10n.loginPassword,
+                    hintText: l10n.loginPasswordHint,
                     textInputAction: TextInputAction.done,
                     prefixIcon: const Icon(
                       Icons.lock_outline_rounded,
@@ -127,7 +138,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppPrimaryButton(
-                    label: 'Sign In',
+                    label: l10n.loginSignIn,
                     isLoading: loading,
                     onPressed: loading ? null : _signIn,
                   ),
@@ -136,13 +147,13 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     alignment: WrapAlignment.center,
                     children: [
                       Text(
-                        "Don't have an account? ",
+                        l10n.loginNoAccount,
                         style: AppTextStyles.body.copyWith(fontSize: 16),
                       ),
                       GestureDetector(
                         onTap: () => context.go(RoutePaths.register),
                         child: Text(
-                          'Sign Up',
+                          l10n.loginSignUp,
                           style: AppTextStyles.button.copyWith(
                             color: AppColors.accentAction,
                           ),

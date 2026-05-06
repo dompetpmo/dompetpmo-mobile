@@ -61,6 +61,10 @@ class CategoryModalShell extends StatelessWidget {
                             ],
                           ),
                         ),
+                        const LanguageSwitcherButton(
+                          iconColor: AppColors.accentAction,
+                          size: 22,
+                        ),
                         IconButton(
                           onPressed: onClose,
                           icon: const Icon(

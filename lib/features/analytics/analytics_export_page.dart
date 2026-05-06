@@ -1,8 +1,10 @@
 import 'package:confindant/app/theme/app_gradients.dart';
+import 'package:confindant/app/theme/app_colors.dart';
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
 import 'package:confindant/features/analytics/models/advanced_analytics_models.dart';
+import 'package:confindant/features/analytics/presentation/view_models/analytics_view_model.dart';
 import 'package:confindant/features/analytics/presentation/view_models/advanced_analytics_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -14,6 +16,7 @@ class AnalyticsExportPage extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final filter = ref.watch(advancedAnalyticsProvider);
+    final analyticsState = ref.watch(analyticsViewModelProvider);
     final resultState = ref.watch(exportProvider);
     final vm = ref.read(exportProvider.notifier);
 
@@ -39,6 +42,11 @@ class AnalyticsExportPage extends ConsumerWidget {
                         color: Colors.white,
                       ),
                     ),
+                    const Spacer(),
+                    const LanguageSwitcherButton(
+                      iconColor: AppColors.white,
+                      size: 22,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -58,28 +66,43 @@ class AnalyticsExportPage extends ConsumerWidget {
                           Expanded(
                             child: AppSecondaryButton(
                               label: 'Export CSV',
-                              onPressed: () => vm.export(
-                                ExportRequest(
-                                  format: ExportFormat.csv,
-                                  filter: filter,
-                                ),
-                              ),
+                              onPressed: analyticsState.data == null
+                                  ? null
+                                  : () => vm.export(
+                                      ExportRequest(
+                                        format: ExportFormat.csv,
+                                        filter: filter,
+                                        data: analyticsState.data!,
+                                        period: analyticsState.period,
+                                      ),
+                                    ),
                             ),
                           ),
                           const SizedBox(width: 12),
                           Expanded(
                             child: AppPrimaryButton(
                               label: 'Export PDF',
-                              onPressed: () => vm.export(
-                                ExportRequest(
-                                  format: ExportFormat.pdf,
-                                  filter: filter,
-                                ),
-                              ),
+                              onPressed: analyticsState.data == null
+                                  ? null
+                                  : () => vm.export(
+                                      ExportRequest(
+                                        format: ExportFormat.pdf,
+                                        filter: filter,
+                                        data: analyticsState.data!,
+                                        period: analyticsState.period,
+                                      ),
+                                    ),
                             ),
                           ),
                         ],
                       ),
+                      if (analyticsState.data == null) ...[
+                        const SizedBox(height: 10),
+                        Text(
+                          'Data analytics belum siap. Kembali ke halaman Analytics lalu tekan Retry.',
+                          style: AppTextStyles.caption,
+                        ),
+                      ],
                       const SizedBox(height: AppSpacing.md),
                       resultState.when(
                         data: (result) {
@@ -95,7 +118,7 @@ class AnalyticsExportPage extends ConsumerWidget {
                           );
                         },
                         error: (error, stackTrace) => Text(
-                          'Export failed.',
+                          'Export failed: $error',
                           style: AppTextStyles.caption,
                         ),
                         loading: () => const LinearProgressIndicator(),

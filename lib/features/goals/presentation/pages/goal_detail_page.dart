@@ -58,6 +58,10 @@ class GoalDetailPage extends ConsumerWidget {
                         ),
                       ),
                     ),
+                    const LanguageSwitcherButton(
+                      iconColor: AppColors.white,
+                      size: 22,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),

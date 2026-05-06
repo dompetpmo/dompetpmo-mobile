@@ -49,16 +49,19 @@ class _SplashPageState extends ConsumerState<SplashPage> {
 
   @override
   Widget build(BuildContext context) {
-    return const AppGradientScaffold(
+    return AppGradientScaffold(
       body: Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            AppLineIcon(
-              kind: AppLineIconKind.wallet,
-              color: AppColors.white,
-              size: 56,
-              strokeWidth: 3,
+            ClipRRect(
+              borderRadius: BorderRadius.circular(20),
+              child: Image.asset(
+                'assets/images/app_logo.png',
+                width: 92,
+                height: 92,
+                fit: BoxFit.cover,
+              ),
             ),
             SizedBox(height: AppSpacing.md),
             Text(

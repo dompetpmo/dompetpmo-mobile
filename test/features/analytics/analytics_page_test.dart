@@ -1,6 +1,7 @@
 import 'package:confindant/features/analytics/analytics_page.dart';
 import 'package:confindant/features/analytics/data/analytics_data_source.dart';
 import 'package:confindant/features/goals/data/goals_data_source.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -20,7 +21,11 @@ void main() {
             const MockGoalsDataSource(),
           ),
         ],
-        child: const MaterialApp(home: AnalyticsPage()),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const AnalyticsPage(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -31,7 +36,7 @@ void main() {
 
     expect(find.byKey(const ValueKey('analytics_loaded_view')), findsOneWidget);
     expect(find.text('Summary'), findsOneWidget);
-    expect(find.text('Category Breakdown'), findsOneWidget);
+    expect(find.text('Expense Breakdown'), findsOneWidget);
   });
 
   testWidgets('renders empty analytics state', (tester) async {

@@ -2,6 +2,7 @@ import 'package:confindant/app/theme/app_colors.dart';
 import 'package:confindant/app/theme/app_gradients.dart';
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
+import 'package:confindant/app/widgets/language_switcher_button.dart';
 import 'package:flutter/material.dart';
 
 class ProfileDetailScaffold extends StatelessWidget {
@@ -57,6 +58,10 @@ class ProfileDetailScaffold extends StatelessWidget {
                             ),
                         ],
                       ),
+                    ),
+                    const LanguageSwitcherButton(
+                      iconColor: AppColors.white,
+                      size: 22,
                     ),
                   ],
                 ),

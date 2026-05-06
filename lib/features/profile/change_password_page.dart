@@ -1,6 +1,7 @@
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/widgets/app_password_field.dart';
 import 'package:confindant/app/widgets/app_primary_button.dart';
+import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/profile/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -17,6 +18,7 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
   final _currentController = TextEditingController();
   final _newController = TextEditingController();
   final _confirmController = TextEditingController();
+  bool _isSubmitting = false;
 
   @override
   void dispose() {
@@ -93,9 +95,11 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
                 ),
                 const SizedBox(height: AppSpacing.md),
                 AppPrimaryButton(
-                  label: 'Update Password',
+                  label: _isSubmitting ? 'Updating...' : 'Update Password',
                   onPressed:
-                      status.isValid && _currentController.text.isNotEmpty
+                      !_isSubmitting &&
+                          status.isValid &&
+                          _currentController.text.isNotEmpty
                       ? () => _submit(context)
                       : null,
                 ),
@@ -107,13 +111,32 @@ class _ChangePasswordPageState extends ConsumerState<ChangePasswordPage> {
     );
   }
 
-  void _submit(BuildContext context) {
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(const SnackBar(content: Text('Password updated (mock).')));
-    _currentController.clear();
-    _newController.clear();
-    _confirmController.clear();
-    setState(() {});
+  Future<void> _submit(BuildContext context) async {
+    setState(() => _isSubmitting = true);
+    try {
+      await ref
+          .read(backendApiServiceProvider)
+          .changePassword(
+            currentPassword: _currentController.text,
+            newPassword: _newController.text,
+            newPasswordConfirmation: _confirmController.text,
+          );
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Password updated.')));
+      _currentController.clear();
+      _newController.clear();
+      _confirmController.clear();
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Failed to update password.')),
+      );
+    } finally {
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+      }
+    }
   }
 }

@@ -5,6 +5,7 @@ import 'package:confindant/app/theme/app_shadows.dart';
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 
@@ -18,29 +19,7 @@ class OnboardingPage extends StatefulWidget {
 class _OnboardingPageState extends State<OnboardingPage> {
   final PageController _controller = PageController();
   int _index = 0;
-
-  final List<_OnboardingItem> _items = const [
-    _OnboardingItem(
-      title: 'Track Your Money',
-      subtitle: 'Keep track of all your income and expenses in one place',
-      iconKind: AppLineIconKind.wallet,
-    ),
-    _OnboardingItem(
-      title: 'Financial Insights',
-      subtitle: 'Get detailed reports and insights about your spending habits',
-      iconKind: AppLineIconKind.trend,
-    ),
-    _OnboardingItem(
-      title: 'Budget Management',
-      subtitle: 'Set budgets and monitor your spending across categories',
-      iconKind: AppLineIconKind.pie,
-    ),
-    _OnboardingItem(
-      title: 'Secure & Private',
-      subtitle: 'Your financial data is encrypted and stored securely',
-      iconKind: AppLineIconKind.shield,
-    ),
-  ];
+  static const _totalItems = 4;
 
   @override
   void dispose() {
@@ -49,7 +28,7 @@ class _OnboardingPageState extends State<OnboardingPage> {
   }
 
   void _goNext() {
-    if (_index == _items.length - 1) {
+    if (_index == _totalItems - 1) {
       context.go(RoutePaths.login);
       return;
     }
@@ -61,16 +40,49 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final items = [
+      _OnboardingItem(
+        title: l10n.onboardingTrackMoneyTitle,
+        subtitle: l10n.onboardingTrackMoneySubtitle,
+        iconKind: AppLineIconKind.wallet,
+      ),
+      _OnboardingItem(
+        title: l10n.onboardingFinancialInsightsTitle,
+        subtitle: l10n.onboardingFinancialInsightsSubtitle,
+        iconKind: AppLineIconKind.trend,
+      ),
+      _OnboardingItem(
+        title: l10n.onboardingBudgetManagementTitle,
+        subtitle: l10n.onboardingBudgetManagementSubtitle,
+        iconKind: AppLineIconKind.pie,
+      ),
+      _OnboardingItem(
+        title: l10n.onboardingSecureTitle,
+        subtitle: l10n.onboardingSecureSubtitle,
+        iconKind: AppLineIconKind.shield,
+      ),
+    ];
     return AppGradientScaffold(
       body: Column(
         children: [
+          const Align(
+            alignment: Alignment.topRight,
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(0, 12, 16, 0),
+              child: LanguageSwitcherButton(
+                iconColor: AppColors.white,
+                size: 24,
+              ),
+            ),
+          ),
           Expanded(
             child: PageView.builder(
               controller: _controller,
-              itemCount: _items.length,
+              itemCount: items.length,
               onPageChanged: (value) => setState(() => _index = value),
               itemBuilder: (context, index) {
-                final item = _items[index];
+                final item = items[index];
                 return Padding(
                   padding: const EdgeInsets.fromLTRB(32, 74, 32, 0),
                   child: Column(
@@ -121,14 +133,14 @@ class _OnboardingPageState extends State<OnboardingPage> {
             padding: const EdgeInsets.symmetric(horizontal: 32),
             child: Column(
               children: [
-                AppIndicatorDots(count: _items.length, activeIndex: _index),
+                AppIndicatorDots(count: items.length, activeIndex: _index),
                 const SizedBox(height: 32),
                 Row(
                   children: [
-                    if (_index != _items.length - 1)
+                    if (_index != items.length - 1)
                       Expanded(
                         child: AppSecondaryButton(
-                          label: 'Skip',
+                          label: l10n.onboardingSkip,
                           backgroundColor: AppColors.white.withValues(
                             alpha: 0.2,
                           ),
@@ -136,15 +148,15 @@ class _OnboardingPageState extends State<OnboardingPage> {
                           onPressed: () => context.go(RoutePaths.login),
                         ),
                       ),
-                    if (_index != _items.length - 1)
+                    if (_index != items.length - 1)
                       const SizedBox(width: AppSpacing.md),
                     Expanded(
-                      flex: _index == _items.length - 1 ? 2 : 1,
+                      flex: _index == items.length - 1 ? 2 : 1,
                       child: AppSecondaryButton(
-                        label: _index == _items.length - 1
-                            ? 'Get Started'
-                            : 'Next',
-                        icon: _index == _items.length - 1
+                        label: _index == items.length - 1
+                            ? l10n.onboardingGetStarted
+                            : l10n.onboardingNext,
+                        icon: _index == items.length - 1
                             ? null
                             : const Icon(
                                 Icons.chevron_right_rounded,

@@ -8,6 +8,7 @@ import 'package:confindant/app/widgets/widgets.dart';
 import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/profile/presentation/widgets/widgets.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_svg/flutter_svg.dart';
@@ -18,7 +19,10 @@ class ProfilePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(profileSettingsProvider).userData;
+    final l10n = AppLocalizations.of(context)!;
+    final profileState = ref.watch(profileSettingsProvider);
+    final user = profileState.userData;
+    final about = profileState.aboutInfo;
 
     return Container(
       decoration: const BoxDecoration(gradient: AppGradients.appBackground),
@@ -28,6 +32,20 @@ class ProfilePage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(39, 74, 39, 140),
           child: Column(
             children: [
+              const Align(
+                alignment: Alignment.centerRight,
+                child: AppGlassContainer(
+                  radius: 15,
+                  blurSigma: 13.2,
+                  padding: EdgeInsets.all(2),
+                  child: LanguageSwitcherButton(
+                    iconColor: AppColors.white,
+                    backgroundColor: Colors.transparent,
+                    size: 22,
+                  ),
+                ),
+              ),
+              const SizedBox(height: AppSpacing.sm),
               _ProfileHeaderCard(
                 name: user.fullName,
                 email: user.email,
@@ -35,38 +53,48 @@ class ProfilePage extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.lg),
               _ProfileSectionCard(
-                title: 'Account Settings',
+                title: l10n.profileAccountSettings,
                 items: [
                   _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/personal_info.svg',
-                    label: 'Personal Information',
+                    label: l10n.profilePersonalInformation,
                     onTap: () => context.push(RoutePaths.profilePersonalInfo),
                   ),
                   _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/notifications.svg',
-                    label: 'Notifications',
+                    label: l10n.profileNotifications,
                     onTap: () => context.push(RoutePaths.profileNotifications),
                   ),
                   _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/change_password.svg',
-                    label: 'Change Password',
+                    label: l10n.profileChangePassword,
                     onTap: () => context.push(RoutePaths.profileChangePassword),
                   ),
                 ],
               ),
               const SizedBox(height: AppSpacing.md),
               _ProfileSectionCard(
-                title: 'Support',
+                title: l10n.profileSupport,
                 items: [
                   _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/help_center.svg',
-                    label: 'Help Center',
+                    label: l10n.profileHelpCenter,
                     onTap: () => context.push(RoutePaths.profileHelpCenter),
                   ),
                   _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/about.svg',
-                    label: 'About Confindant',
+                    label: l10n.profileAboutConfindant,
                     onTap: () => context.push(RoutePaths.profileAbout),
+                  ),
+                  _ProfileMenuItemData(
+                    iconAsset: 'assets/icons/profile/about.svg',
+                    label: l10n.profileAiOcrHealth,
+                    onTap: () => context.push(RoutePaths.profileAiOcrHealth),
+                  ),
+                  _ProfileMenuItemData(
+                    iconAsset: 'assets/icons/profile/help_center.svg',
+                    label: l10n.profileAiFinanceChat,
+                    onTap: () => context.push(RoutePaths.profileAiFinanceChat),
                   ),
                 ],
               ),
@@ -80,7 +108,7 @@ class ProfilePage extends ConsumerWidget {
                 child: _ProfileMenuTile(
                   item: _ProfileMenuItemData(
                     iconAsset: 'assets/icons/profile/logout.svg',
-                    label: 'Logout',
+                    label: l10n.profileLogout,
                     iconTint: AppColors.accentAction,
                     labelColor: AppColors.accentAction,
                     onTap: () => _showLogoutSheet(context, ref),
@@ -89,14 +117,14 @@ class ProfilePage extends ConsumerWidget {
               ),
               const SizedBox(height: AppSpacing.xl),
               Text(
-                'Confindant v1.0.0',
+                '${about.appName} v${about.version}',
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.white.withValues(alpha: 0.82),
                 ),
               ),
               const SizedBox(height: AppSpacing.xs),
               Text(
-                '(c) 2026 All rights reserved',
+                l10n.profileBuildFooter(about.build),
                 style: AppTextStyles.caption.copyWith(
                   color: AppColors.white.withValues(alpha: 0.70),
                 ),

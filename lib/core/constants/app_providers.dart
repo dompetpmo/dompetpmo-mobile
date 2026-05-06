@@ -1,6 +1,7 @@
 import 'package:confindant/core/auth/auth_controller.dart';
 import 'package:confindant/core/auth/auth_state.dart';
 import 'package:confindant/core/auth/auth_storage.dart';
+import 'package:confindant/core/notifications/app_notification_service.dart';
 import 'package:confindant/core/network/app_api_client.dart';
 import 'package:confindant/core/network/backend_api_service.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -60,6 +61,10 @@ final appApiClientProvider = Provider<AppApiClient>((ref) {
 
 final backendApiServiceProvider = Provider<BackendApiService>((ref) {
   return BackendApiService(ref.watch(appApiClientProvider));
+});
+
+final appNotificationServiceProvider = Provider<AppNotificationService>((ref) {
+  return AppNotificationService();
 });
 
 final authControllerProvider =

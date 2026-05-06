@@ -1,8 +1,11 @@
 import 'package:confindant/app/theme/app_gradients.dart';
+import 'package:confindant/app/theme/app_colors.dart';
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
+import 'package:confindant/features/analytics/presentation/view_models/analytics_view_model.dart';
 import 'package:confindant/features/analytics/presentation/view_models/advanced_analytics_view_model.dart';
+import 'package:confindant/features/wallet/presentation/view_models/wallet_view_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -19,6 +22,7 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
   late TextEditingController _from;
   late TextEditingController _to;
   String _wallet = 'All Wallets';
+  String _walletId = '';
   String _category = 'All Categories';
 
   @override
@@ -28,6 +32,7 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
     _from = TextEditingController(text: f.fromDateLabel);
     _to = TextEditingController(text: f.toDateLabel);
     _wallet = f.wallet;
+    _walletId = f.walletId;
     _category = f.category;
   }
 
@@ -40,6 +45,31 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final wallets = ref.watch(walletViewModelProvider).wallets;
+    final analyticsData = ref.watch(analyticsViewModelProvider).data;
+    final categorySet = <String>{'All Categories'};
+    categorySet.addAll(
+      analyticsData?.categoryBreakdown.map((e) => e.label) ?? const <String>[],
+    );
+    categorySet.addAll(
+      ref
+          .watch(walletViewModelProvider)
+          .budgets
+          .map((e) => e['category']?.toString() ?? '')
+          .where((e) => e.isNotEmpty),
+    );
+    final categories = categorySet.toList();
+
+    final walletItems = <DropdownMenuItem<String>>[
+      const DropdownMenuItem(value: '', child: Text('All Wallets')),
+      ...wallets.map((wallet) {
+        final id =
+            wallet['id']?.toString() ?? wallet['_id']?.toString() ?? '';
+        final name = wallet['wallet_name']?.toString() ?? 'Wallet';
+        return DropdownMenuItem(value: id, child: Text(name));
+      }),
+    ];
+
     return Scaffold(
       backgroundColor: Colors.transparent,
       body: Container(
@@ -62,6 +92,11 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
                         color: Colors.white,
                       ),
                     ),
+                    const Spacer(),
+                    const LanguageSwitcherButton(
+                      iconColor: AppColors.white,
+                      size: 22,
+                    ),
                   ],
                 ),
                 const SizedBox(height: AppSpacing.md),
@@ -81,43 +116,37 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       DropdownButtonFormField<String>(
-                        initialValue: _wallet,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'All Wallets',
-                            child: Text('All Wallets'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Main Wallet',
-                            child: Text('Main Wallet'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Travel Wallet',
-                            child: Text('Travel Wallet'),
-                          ),
-                        ],
-                        onChanged: (v) =>
-                            setState(() => _wallet = v ?? _wallet),
+                        initialValue: _walletId,
+                        items: walletItems,
+                        onChanged: (v) {
+                          final selected = wallets.firstWhere(
+                            (wallet) =>
+                                (wallet['id']?.toString() ??
+                                    wallet['_id']?.toString() ??
+                                    '') ==
+                                (v ?? ''),
+                            orElse: () => const <String, dynamic>{},
+                          );
+                          setState(() {
+                            _walletId = v ?? '';
+                            _wallet = _walletId.isEmpty
+                                ? 'All Wallets'
+                                : (selected['wallet_name']?.toString() ?? 'Wallet');
+                          });
+                        },
                         decoration: const InputDecoration(labelText: 'Wallet'),
                       ),
                       const SizedBox(height: AppSpacing.sm),
                       DropdownButtonFormField<String>(
                         initialValue: _category,
-                        items: const [
-                          DropdownMenuItem(
-                            value: 'All Categories',
-                            child: Text('All Categories'),
-                          ),
-                          DropdownMenuItem(value: 'Food', child: Text('Food')),
-                          DropdownMenuItem(
-                            value: 'Shopping',
-                            child: Text('Shopping'),
-                          ),
-                          DropdownMenuItem(
-                            value: 'Transport',
-                            child: Text('Transport'),
-                          ),
-                        ],
+                        items: categories
+                            .map(
+                              (category) => DropdownMenuItem(
+                                value: category,
+                                child: Text(category),
+                              ),
+                            )
+                            .toList(),
                         onChanged: (v) =>
                             setState(() => _category = v ?? _category),
                         decoration: const InputDecoration(
@@ -134,8 +163,10 @@ class _AnalyticsFilterPageState extends ConsumerState<AnalyticsFilterPage> {
                                 fromDateLabel: _from.text.trim(),
                                 toDateLabel: _to.text.trim(),
                                 wallet: _wallet,
+                                walletId: _walletId,
                                 category: _category,
                               );
+                          ref.read(analyticsViewModelProvider.notifier).retry();
                           context.pop();
                         },
                       ),

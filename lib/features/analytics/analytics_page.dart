@@ -5,6 +5,7 @@ import 'package:confindant/app/theme/app_radius.dart';
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
+import 'package:confindant/core/utils/time_greeting.dart';
 import 'package:confindant/features/analytics/models/advanced_analytics_models.dart';
 import 'package:confindant/features/analytics/models/analytics_models.dart';
 import 'package:confindant/features/analytics/presentation/view_models/advanced_analytics_view_model.dart';
@@ -12,20 +13,31 @@ import 'package:confindant/features/analytics/presentation/view_models/analytics
 import 'package:confindant/features/analytics/presentation/widgets/widgets.dart';
 import 'package:confindant/features/goals/presentation/view_models/goals_view_model.dart';
 import 'package:confindant/features/home/presentation/widgets/home_formatters.dart';
+import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
+
+enum AnalyticsTrendMode { expenseOnly, netFlow }
+
+final analyticsTrendModeProvider = StateProvider<AnalyticsTrendMode>((ref) {
+  return AnalyticsTrendMode.expenseOnly;
+});
 
 class AnalyticsPage extends ConsumerWidget {
   const AnalyticsPage({super.key});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final state = ref.watch(analyticsViewModelProvider);
     final vm = ref.read(analyticsViewModelProvider.notifier);
+    final profile = ref.watch(profileSettingsProvider).userData;
     final filter = ref.watch(advancedAnalyticsProvider);
     final comparison = ref.watch(periodComparisonProvider);
     final anomaly = ref.watch(anomalyInsightProvider);
+    final trendMode = ref.watch(analyticsTrendModeProvider);
     final goals = ref.watch(goalsViewModelProvider);
     final goalsSavingImpact = goals.fold<double>(
       0,
@@ -41,7 +53,11 @@ class AnalyticsPage extends ConsumerWidget {
           padding: const EdgeInsets.fromLTRB(31, 62, 31, 140),
           child: Column(
             children: [
-              _AnalyticsTopRow(onNotificationTap: () {}),
+              _AnalyticsTopRow(
+                name: profile.fullName.isEmpty ? 'User' : profile.fullName,
+                avatarPath: profile.avatarPath,
+                onNotificationTap: () => context.push(RoutePaths.profileNotifications),
+              ),
               const SizedBox(height: AppSpacing.lg),
               _AnalyticsFilterBar(
                 filter: filter,
@@ -61,13 +77,16 @@ class AnalyticsPage extends ConsumerWidget {
                   comparison: comparison,
                   anomaly: anomaly,
                   goalsSavingImpact: goalsSavingImpact,
+                  trendMode: trendMode,
+                  onTrendModeChanged: (mode) {
+                    ref.read(analyticsTrendModeProvider.notifier).state = mode;
+                  },
                 ),
               if (state.uiState == AnalyticsUiState.empty)
                 const _EmptyAnalyticsView(),
               if (state.uiState == AnalyticsUiState.error)
                 _ErrorAnalyticsView(
-                  message:
-                      state.errorMessage ?? 'Unable to load analytics data.',
+                  message: state.errorMessage ?? l10n.analyticsUnableLoadData,
                   onRetry: vm.retry,
                 ),
             ],
@@ -84,40 +103,245 @@ class _LoadedAnalyticsView extends StatelessWidget {
     required this.comparison,
     required this.anomaly,
     required this.goalsSavingImpact,
+    required this.trendMode,
+    required this.onTrendModeChanged,
   });
 
   final AnalyticsScreenState state;
   final PeriodComparison comparison;
   final AnomalyInsight anomaly;
   final double goalsSavingImpact;
+  final AnalyticsTrendMode trendMode;
+  final ValueChanged<AnalyticsTrendMode> onTrendModeChanged;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final data = state.data!;
     return Column(
       key: const ValueKey('analytics_loaded_view'),
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         AnalyticsSummaryCard(summary: data.summary),
         const SizedBox(height: AppSpacing.md),
-        AnalyticsDonutBreakdownCard(slices: data.categoryBreakdown),
+        SizedBox(
+          width: double.infinity,
+          child: AnalyticsDonutBreakdownCard(
+            slices: data.categoryBreakdown,
+            title: l10n.analyticsExpenseBreakdown,
+          ),
+        ),
         const SizedBox(height: AppSpacing.md),
-        AnalyticsTrendCard(period: state.period, points: data.trendPoints),
+        SizedBox(
+          width: double.infinity,
+          child: AnalyticsDonutBreakdownCard(
+            slices: data.incomeBreakdown,
+            title: l10n.analyticsIncomeSources,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          width: double.infinity,
+          child: _TrendModeToggle(
+            trendMode: trendMode,
+            onTrendModeChanged: onTrendModeChanged,
+          ),
+        ),
+        const SizedBox(height: AppSpacing.md),
+        SizedBox(
+          width: double.infinity,
+          child: AnalyticsTrendCard(
+            period: state.period,
+            points: trendMode == AnalyticsTrendMode.netFlow
+                ? data.netFlowTrend
+                : data.trendPoints,
+          ),
+        ),
         const SizedBox(height: AppSpacing.md),
         _ComparisonCard(comparison: comparison),
         const SizedBox(height: AppSpacing.md),
         _AnomalyCard(anomaly: anomaly),
         const SizedBox(height: AppSpacing.md),
-        AnalyticsBudgetProgressCard(items: data.budgetProgress),
+        SizedBox(
+          width: double.infinity,
+          child: AnalyticsBudgetProgressCard(items: data.budgetProgress),
+        ),
+        if (data.budgetRecommendations.isNotEmpty) ...[
+          const SizedBox(height: AppSpacing.md),
+          SizedBox(
+            width: double.infinity,
+            child: _BudgetRecommendationCard(items: data.budgetRecommendations),
+          ),
+        ],
         const SizedBox(height: AppSpacing.md),
-        AnalyticsInsightCard(text: data.insightText),
+        SizedBox(
+          width: double.infinity,
+          child: AnalyticsInsightCard(text: data.insightText),
+        ),
         const SizedBox(height: AppSpacing.md),
-        AppCardContainer(
-          child: Text(
-            'Saving goals impact: ${formatHomeRupiah(goalsSavingImpact)} has been allocated to active goals.',
-            style: AppTextStyles.caption.copyWith(fontSize: 13),
+        SizedBox(
+          width: double.infinity,
+          child: AppCardContainer(
+            child: Text(
+              'Saving goals impact: ${formatHomeRupiah(goalsSavingImpact)} has been allocated to active goals.',
+              style: AppTextStyles.caption.copyWith(fontSize: 13),
+            ),
           ),
         ),
       ],
+    );
+  }
+}
+
+class _BudgetRecommendationCard extends StatelessWidget {
+  const _BudgetRecommendationCard({required this.items});
+
+  final List<BudgetRecommendationItem> items;
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCardContainer(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'AI Budget Recommendations',
+            style: AppTextStyles.sectionTitle.copyWith(fontSize: 18),
+          ),
+          const SizedBox(height: 10),
+          ...items.take(3).map((item) {
+            final delta = item.recommendedLimit - item.currentLimit;
+            final deltaLabel = delta <= 0 ? 'Keep' : '+${formatHomeRupiah(delta)}';
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF6F8FC),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            item.category,
+                            style: AppTextStyles.label.copyWith(fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Text(
+                          deltaLabel,
+                          style: AppTextStyles.caption.copyWith(
+                            color: delta > 0 ? const Color(0xFFC10007) : AppColors.textSecondary,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Current ${formatHomeRupiah(item.currentLimit)} -> Recommended ${formatHomeRupiah(item.recommendedLimit)}',
+                      style: AppTextStyles.caption.copyWith(fontSize: 12),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      item.reason,
+                      style: AppTextStyles.caption.copyWith(fontSize: 12, color: AppColors.textSecondary),
+                    ),
+                    if (item.simulationChangePercent != null &&
+                        item.simulationSavingImpact != null &&
+                        item.simulationLimit != null) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        'Simulasi ${item.simulationChangePercent!.toStringAsFixed(0)}% -> limit ${formatHomeRupiah(item.simulationLimit!)} | dampak saving ${formatHomeRupiah(item.simulationSavingImpact!)}',
+                        style: AppTextStyles.caption.copyWith(
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _TrendModeToggle extends StatelessWidget {
+  const _TrendModeToggle({
+    required this.trendMode,
+    required this.onTrendModeChanged,
+  });
+
+  final AnalyticsTrendMode trendMode;
+  final ValueChanged<AnalyticsTrendMode> onTrendModeChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    return AppCardContainer(
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final useVertical = constraints.maxWidth < 360;
+          if (useVertical) {
+            return Column(
+              children: [
+                AppSecondaryButton(
+                  label: l10n.analyticsExpenseOnly,
+                  backgroundColor: trendMode == AnalyticsTrendMode.expenseOnly
+                      ? const Color(0xFFE0F6FF)
+                      : Colors.transparent,
+                  foregroundColor: AppColors.accentAction,
+                  onPressed: () => onTrendModeChanged(AnalyticsTrendMode.expenseOnly),
+                ),
+                const SizedBox(height: 8),
+                AppSecondaryButton(
+                  label: l10n.analyticsNetFlow,
+                  backgroundColor: trendMode == AnalyticsTrendMode.netFlow
+                      ? const Color(0xFFE0F6FF)
+                      : Colors.transparent,
+                  foregroundColor: AppColors.accentAction,
+                  onPressed: () => onTrendModeChanged(AnalyticsTrendMode.netFlow),
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              Expanded(
+                child: AppSecondaryButton(
+                  label: l10n.analyticsExpenseOnly,
+                  backgroundColor: trendMode == AnalyticsTrendMode.expenseOnly
+                      ? const Color(0xFFE0F6FF)
+                      : Colors.transparent,
+                  foregroundColor: AppColors.accentAction,
+                  onPressed: () => onTrendModeChanged(AnalyticsTrendMode.expenseOnly),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: AppSecondaryButton(
+                  label: l10n.analyticsNetFlow,
+                  backgroundColor: trendMode == AnalyticsTrendMode.netFlow
+                      ? const Color(0xFFE0F6FF)
+                      : Colors.transparent,
+                  foregroundColor: AppColors.accentAction,
+                  onPressed: () => onTrendModeChanged(AnalyticsTrendMode.netFlow),
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
   }
 }
@@ -178,6 +402,7 @@ class _ComparisonCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final isUp = comparison.deltaPercent >= 0;
     final color = isUp ? const Color(0xFFC10007) : const Color(0xFF008236);
     return SizedBox(
@@ -187,19 +412,19 @@ class _ComparisonCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Compare',
+              l10n.analyticsCompare,
               style: AppTextStyles.sectionTitle.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 8),
             Text(
               comparison.mode == AnalyticsCompareMode.monthOverMonth
-                  ? 'Month over Month'
-                  : 'Week over Week',
+                  ? l10n.analyticsMonthOverMonth
+                  : l10n.analyticsWeekOverWeek,
               style: AppTextStyles.caption,
             ),
             const SizedBox(height: 4),
             Text(
-              '${isUp ? '+' : ''}${comparison.deltaPercent.toStringAsFixed(2)}% vs previous period',
+              '${isUp ? '+' : ''}${comparison.deltaPercent.toStringAsFixed(2)}% ${l10n.analyticsVsPreviousPeriod}',
               style: AppTextStyles.label.copyWith(
                 color: color,
                 fontWeight: FontWeight.w700,
@@ -219,6 +444,7 @@ class _AnomalyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SizedBox(
       width: double.infinity,
       child: AppCardContainer(
@@ -226,7 +452,7 @@ class _AnomalyCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Anomaly Insight',
+              l10n.analyticsAnomalyInsight,
               style: AppTextStyles.sectionTitle.copyWith(fontSize: 18),
             ),
             const SizedBox(height: 8),
@@ -246,19 +472,20 @@ class _EmptyAnalyticsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppCardContainer(
       key: const ValueKey('analytics_empty_view'),
       padding: const EdgeInsets.fromLTRB(20, 24, 20, 24),
       child: Column(
         children: [
-          const AppEmptyAssetPlaceholder(
-            label: 'No analytics data yet',
+          AppEmptyAssetPlaceholder(
+            label: l10n.analyticsNoDataYet,
             height: 80,
             icon: Icons.data_usage_rounded,
           ),
           const SizedBox(height: AppSpacing.sm),
           Text(
-            'Mulai tambah transaksi agar insight analytics bisa ditampilkan.',
+            l10n.analyticsStartAddingTransactions,
             textAlign: TextAlign.center,
             style: AppTextStyles.body.copyWith(
               color: AppColors.textSecondary,
@@ -307,17 +534,23 @@ class _ErrorAnalyticsView extends StatelessWidget {
 }
 
 class _AnalyticsTopRow extends StatelessWidget {
-  const _AnalyticsTopRow({required this.onNotificationTap});
+  const _AnalyticsTopRow({
+    required this.name,
+    required this.avatarPath,
+    required this.onNotificationTap,
+  });
 
+  final String name;
+  final String avatarPath;
   final VoidCallback onNotificationTap;
 
   @override
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const CircleAvatar(
+        CircleAvatar(
           radius: 25,
-          backgroundImage: AssetImage('assets/avatars/analytics_avatar.png'),
+          backgroundImage: _avatarImageProvider(avatarPath),
           backgroundColor: Colors.transparent,
         ),
         const SizedBox(width: 15),
@@ -326,7 +559,7 @@ class _AnalyticsTopRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Good Morning!',
+                timeGreeting(context),
                 style: AppTextStyles.body.copyWith(
                   color: AppColors.white.withValues(alpha: 0.6),
                   fontSize: 17,
@@ -334,28 +567,66 @@ class _AnalyticsTopRow extends StatelessWidget {
                 ),
               ),
               Text(
-                'Kennedy',
+                name,
                 style: AppTextStyles.sectionTitle.copyWith(
                   color: AppColors.white,
                   fontSize: 30 / 1.36,
                 ),
               ),
+              StreamBuilder<DateTime>(
+                stream: Stream<DateTime>.periodic(
+                  const Duration(minutes: 1),
+                  (_) => DateTime.now(),
+                ),
+                initialData: DateTime.now(),
+                builder: (context, snapshot) {
+                  return Text(
+                    formatRealtimeDateLabel(context, snapshot.data),
+                    style: AppTextStyles.caption.copyWith(
+                      color: AppColors.white.withValues(alpha: 0.72),
+                      fontSize: 12,
+                    ),
+                  );
+                },
+              ),
             ],
           ),
         ),
-        AppGlassContainer(
-          radius: 15,
-          blurSigma: 13.2,
-          padding: const EdgeInsets.all(2),
-          child: AppIconButtonCircle(
-            icon: Icons.notifications_none_rounded,
-            size: 30,
-            iconColor: AppColors.white,
-            backgroundColor: Colors.transparent,
-            onPressed: onNotificationTap,
-          ),
+        Row(
+          children: [
+            AppGlassContainer(
+              radius: 15,
+              blurSigma: 13.2,
+              padding: const EdgeInsets.all(2),
+              child: AppIconButtonCircle(
+                icon: Icons.notifications_none_rounded,
+                size: 30,
+                iconColor: AppColors.white,
+                backgroundColor: Colors.transparent,
+                onPressed: onNotificationTap,
+              ),
+            ),
+            const SizedBox(width: 6),
+            const AppGlassContainer(
+              radius: 15,
+              blurSigma: 13.2,
+              padding: EdgeInsets.all(2),
+              child: LanguageSwitcherButton(
+                iconColor: AppColors.white,
+                backgroundColor: Colors.transparent,
+                size: 22,
+              ),
+            ),
+          ],
         ),
       ],
     );
   }
+}
+
+ImageProvider _avatarImageProvider(String avatarPath) {
+  if (avatarPath.startsWith('http://') || avatarPath.startsWith('https://')) {
+    return NetworkImage(avatarPath);
+  }
+  return AssetImage(avatarPath);
 }

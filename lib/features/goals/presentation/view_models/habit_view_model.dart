@@ -5,17 +5,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 final habitViewModelProvider =
     StateNotifierProvider<HabitViewModel, List<HabitChallenge>>((ref) {
       final dataSource = ref.watch(goalsDataSourceProvider);
-      final initial = dataSource is MockGoalsDataSource
-          ? dataSource.seedData.habits
-          : const <HabitChallenge>[];
-      return HabitViewModel(dataSource, initialHabits: initial);
+      return HabitViewModel(dataSource, ref);
     });
 
 final habitStreakProvider = StateProvider<HabitStreak>((ref) {
-  final dataSource = ref.watch(goalsDataSourceProvider);
-  if (dataSource is MockGoalsDataSource) {
-    return dataSource.seedData.streak;
-  }
   return const HabitStreak(
     currentStreak: 0,
     longestStreak: 0,
@@ -34,20 +27,21 @@ final habitReminderTextProvider = Provider<String>((ref) {
 });
 
 class HabitViewModel extends StateNotifier<List<HabitChallenge>> {
-  HabitViewModel(
-    this._dataSource, {
-    List<HabitChallenge> initialHabits = const [],
-  }) : super(initialHabits) {
-    if (initialHabits.isEmpty) {
-      _load();
-    }
+  HabitViewModel(this._dataSource, this._ref) : super(const []) {
+    _load();
   }
 
   final GoalsDataSource _dataSource;
+  final Ref _ref;
 
   Future<void> _load() async {
-    final seed = await _dataSource.fetch();
-    state = seed.habits;
+    try {
+      final seed = await _dataSource.fetch();
+      state = seed.habits;
+      _ref.read(habitStreakProvider.notifier).state = seed.streak;
+    } catch (_) {
+      state = const [];
+    }
   }
 
   Future<void> incrementProgress(String id) async {
@@ -56,6 +50,9 @@ class HabitViewModel extends StateNotifier<List<HabitChallenge>> {
       for (final h in state)
         if (h.id == id) updated else h,
     ];
+    if (_dataSource is! MockGoalsDataSource) {
+      await _load();
+    }
   }
 
   Future<void> resetProgress(String id) async {
@@ -64,12 +61,19 @@ class HabitViewModel extends StateNotifier<List<HabitChallenge>> {
       for (final h in state)
         if (h.id == id) updated else h,
     ];
+    if (_dataSource is! MockGoalsDataSource) {
+      await _load();
+    }
   }
 
-  void toggleActive(String id, bool value) {
+  Future<void> toggleActive(String id, bool value) async {
+    final updated = await _dataSource.updateHabitActive(id, value);
     state = [
       for (final h in state)
-        if (h.id == id) h.copyWith(active: value) else h,
+        if (h.id == id) updated else h,
     ];
+    if (_dataSource is! MockGoalsDataSource) {
+      await _load();
+    }
   }
 }

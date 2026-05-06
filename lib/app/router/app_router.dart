@@ -13,11 +13,14 @@ import 'package:confindant/features/goals/presentation/pages/goals_page.dart';
 import 'package:confindant/features/home/home_page.dart';
 import 'package:confindant/features/onboarding/onboarding_page.dart';
 import 'package:confindant/features/profile/about_page.dart';
+import 'package:confindant/features/profile/ai_finance_chat_page.dart';
+import 'package:confindant/features/profile/ai_ocr_health_page.dart';
 import 'package:confindant/features/profile/change_password_page.dart';
 import 'package:confindant/features/profile/help_center_page.dart';
 import 'package:confindant/features/profile/notifications_page.dart';
 import 'package:confindant/features/profile/personal_info_page.dart';
 import 'package:confindant/features/profile/profile_page.dart';
+import 'package:confindant/features/recurring/recurring_transactions_page.dart';
 import 'package:confindant/features/scan/scan_page.dart';
 import 'package:confindant/features/scan/scan_receipt_page.dart';
 import 'package:confindant/features/shell/main_shell_page.dart';
@@ -116,8 +119,9 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
         path: RoutePaths.scanReceipt,
-        builder: (context, state) =>
-            ScanReceiptPage(initialImagePath: state.extra?.toString()),
+        builder: (context, state) => ScanReceiptPage(
+          initialImagePath: state.extra is String ? state.extra as String : null,
+        ),
       ),
       GoRoute(
         path: RoutePaths.profilePersonalInfo,
@@ -140,6 +144,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const AboutPage(),
       ),
       GoRoute(
+        path: RoutePaths.profileAiOcrHealth,
+        builder: (context, state) => const AiOcrHealthPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.profileAiFinanceChat,
+        builder: (context, state) => const AiFinanceChatPage(),
+      ),
+      GoRoute(
         path: RoutePaths.goals,
         builder: (context, state) => const GoalsPage(),
       ),
@@ -157,6 +169,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: RoutePaths.analyticsExport,
         builder: (context, state) => const AnalyticsExportPage(),
+      ),
+      GoRoute(
+        path: RoutePaths.recurringTransactions,
+        builder: (context, state) => const RecurringTransactionsPage(),
       ),
     ],
     redirect: (context, state) {

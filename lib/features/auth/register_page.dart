@@ -5,6 +5,7 @@ import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
 import 'package:confindant/app/widgets/widgets.dart';
 import 'package:confindant/core/constants/app_providers.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -31,6 +32,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
   }
 
   Future<void> _createAccount() async {
+    final l10n = AppLocalizations.of(context)!;
     setState(() => loading = true);
     final ok = await ref
         .read(authControllerProvider.notifier)
@@ -48,7 +50,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
     }
 
     final message =
-        ref.read(authControllerProvider).errorMessage ?? 'Registrasi gagal';
+        ref.read(authControllerProvider).errorMessage ?? l10n.authRegisterFailed;
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(SnackBar(content: Text(message)));
@@ -56,6 +58,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return AppGradientScaffold(
       body: Center(
         child: SingleChildScrollView(
@@ -69,6 +72,14 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
+                  const Align(
+                    alignment: Alignment.centerRight,
+                    child: LanguageSwitcherButton(
+                      iconColor: AppColors.accentAction,
+                      size: 22,
+                    ),
+                  ),
+                  const SizedBox(height: AppSpacing.sm),
                   Container(
                     width: 80,
                     height: 80,
@@ -87,21 +98,21 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   const SizedBox(height: AppSpacing.lg),
                   Text(
-                    'Create Account',
+                    l10n.registerCreateAccount,
                     textAlign: TextAlign.center,
                     style: AppTextStyles.screenTitle,
                   ),
                   const SizedBox(height: AppSpacing.xs),
                   Text(
-                    'Start managing your finances today',
+                    l10n.registerSubtitle,
                     style: AppTextStyles.body.copyWith(fontSize: 16),
                     textAlign: TextAlign.center,
                   ),
                   const SizedBox(height: AppSpacing.xl),
                   AppTextField(
                     controller: nameController,
-                    labelText: 'Full Name',
-                    hintText: 'Enter your name',
+                    labelText: l10n.registerFullName,
+                    hintText: l10n.registerNameHint,
                     textInputAction: TextInputAction.next,
                     prefixIcon: const Icon(
                       Icons.person_outline_rounded,
@@ -111,8 +122,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   const SizedBox(height: AppSpacing.md),
                   AppTextField(
                     controller: emailController,
-                    labelText: 'Email',
-                    hintText: 'Enter your email',
+                    labelText: l10n.registerEmail,
+                    hintText: l10n.registerEmailHint,
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
                     prefixIcon: const Icon(
@@ -123,8 +134,8 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   const SizedBox(height: AppSpacing.md),
                   AppPasswordField(
                     controller: passwordController,
-                    labelText: 'Password',
-                    hintText: 'Create a password',
+                    labelText: l10n.registerPassword,
+                    hintText: l10n.registerPasswordHint,
                     textInputAction: TextInputAction.done,
                     prefixIcon: const Icon(
                       Icons.lock_outline_rounded,
@@ -133,7 +144,7 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                   ),
                   const SizedBox(height: AppSpacing.md),
                   AppPrimaryButton(
-                    label: 'Create Account',
+                    label: l10n.registerCreateAccount,
                     isLoading: loading,
                     onPressed: loading ? null : _createAccount,
                   ),
@@ -142,13 +153,13 @@ class _RegisterPageState extends ConsumerState<RegisterPage> {
                     alignment: WrapAlignment.center,
                     children: [
                       Text(
-                        'Already have an account? ',
+                        l10n.registerHaveAccount,
                         style: AppTextStyles.body.copyWith(fontSize: 16),
                       ),
                       GestureDetector(
                         onTap: () => context.go(RoutePaths.login),
                         child: Text(
-                          'Sign In',
+                          l10n.loginSignIn,
                           style: AppTextStyles.button.copyWith(
                             color: AppColors.accentAction,
                           ),

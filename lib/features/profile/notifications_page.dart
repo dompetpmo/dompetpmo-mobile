@@ -1,5 +1,7 @@
 import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
+import 'package:confindant/core/ai/ai_settings_controller.dart';
+import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/profile/presentation/widgets/widgets.dart';
 import 'package:flutter/material.dart';
@@ -13,6 +15,8 @@ class NotificationsPage extends ConsumerWidget {
     final state = ref.watch(profileSettingsProvider);
     final vm = ref.read(profileSettingsProvider.notifier);
     final settings = state.notificationSettings;
+    final aiSettings = ref.watch(aiSettingsProvider);
+    final aiVm = ref.read(aiSettingsProvider.notifier);
 
     return ProfileDetailScaffold(
       title: 'Notifications',
@@ -48,6 +52,11 @@ class NotificationsPage extends ConsumerWidget {
                   value: settings.weeklyReport,
                   onChanged: vm.toggleWeeklyReport,
                 ),
+                SettingsToggleTile(
+                  label: 'AI Auto Categorization',
+                  value: aiSettings.autoCategorizationEnabled,
+                  onChanged: (value) => aiVm.setAutoCategorizationEnabled(value),
+                ),
               ],
             ),
           ),
@@ -66,6 +75,55 @@ class NotificationsPage extends ConsumerWidget {
                   if (i != state.recentNotifications.length - 1)
                     const Divider(height: 1),
                 ],
+              ],
+            ),
+          ),
+          const SizedBox(height: AppSpacing.md),
+          ProfileSettingsCard(
+            title: 'Notification Test',
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: () async {
+                      final granted = await ref
+                          .read(appNotificationServiceProvider)
+                          .requestPermission();
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(
+                            granted
+                                ? 'Izin notifikasi diberikan.'
+                                : 'Izin notifikasi ditolak. Aktifkan dari Settings HP.',
+                          ),
+                        ),
+                      );
+                    },
+                    child: const Text('Minta Izin'),
+                  ),
+                ),
+                const SizedBox(width: AppSpacing.sm),
+                Expanded(
+                  child: ElevatedButton(
+                    onPressed: () async {
+                      await ref
+                          .read(appNotificationServiceProvider)
+                          .show(
+                            id: DateTime.now().millisecondsSinceEpoch % 100000,
+                            title: 'Confindant',
+                            body: 'Notifikasi test berhasil masuk ke perangkat.',
+                          );
+                      if (!context.mounted) return;
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Notifikasi test telah dikirim.'),
+                        ),
+                      );
+                    },
+                    child: const Text('Kirim Test'),
+                  ),
+                ),
               ],
             ),
           ),

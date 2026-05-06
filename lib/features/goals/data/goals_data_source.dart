@@ -23,11 +23,23 @@ abstract class GoalsDataSource {
     required double targetAmount,
     required String targetDateLabel,
     required String linkedWallet,
+    bool autoTopupEnabled = false,
+    double autoTopupPercent = 0,
+  });
+  Future<GoalData> updateGoal({
+    required String id,
+    String? name,
+    double? targetAmount,
+    String? targetDateLabel,
+    String? linkedWallet,
+    bool? autoTopupEnabled,
+    double? autoTopupPercent,
   });
   Future<void> deleteGoal(String id);
   Future<GoalData> addContribution(String id, double amount, {String? note});
   Future<HabitChallenge> incrementHabit(String id);
   Future<HabitChallenge> resetHabit(String id);
+  Future<HabitChallenge> updateHabitActive(String id, bool active);
 }
 
 class MockGoalsDataSource implements GoalsDataSource {
@@ -42,6 +54,8 @@ class MockGoalsDataSource implements GoalsDataSource {
         currentAmount: 5250000,
         targetDateLabel: 'Dec 2026',
         linkedWallet: 'Main Wallet',
+        autoTopupEnabled: false,
+        autoTopupPercent: 0,
         contributions: [
           GoalContribution(dateLabel: 'Mar 08', amount: 350000, note: 'Top up'),
         ],
@@ -77,6 +91,8 @@ class MockGoalsDataSource implements GoalsDataSource {
     required double targetAmount,
     required String targetDateLabel,
     required String linkedWallet,
+    bool autoTopupEnabled = false,
+    double autoTopupPercent = 0,
   }) async {
     return GoalData(
       id: 'goal_${DateTime.now().millisecondsSinceEpoch}',
@@ -85,12 +101,50 @@ class MockGoalsDataSource implements GoalsDataSource {
       currentAmount: 0,
       targetDateLabel: targetDateLabel,
       linkedWallet: linkedWallet,
+      autoTopupEnabled: autoTopupEnabled,
+      autoTopupPercent: autoTopupPercent,
       contributions: const [],
     );
   }
 
   @override
   Future<void> deleteGoal(String id) async {}
+
+  @override
+  Future<GoalData> updateGoal({
+    required String id,
+    String? name,
+    double? targetAmount,
+    String? targetDateLabel,
+    String? linkedWallet,
+    bool? autoTopupEnabled,
+    double? autoTopupPercent,
+  }) async {
+    final seed = await fetch();
+    final existing = seed.goals.where((g) => g.id == id);
+    if (existing.isNotEmpty) {
+      return existing.first.copyWith(
+        name: name,
+        targetAmount: targetAmount,
+        targetDateLabel: targetDateLabel,
+        linkedWallet: linkedWallet,
+        autoTopupEnabled: autoTopupEnabled,
+        autoTopupPercent: autoTopupPercent,
+      );
+    }
+
+    return GoalData(
+      id: id,
+      name: name ?? 'Goal',
+      targetAmount: targetAmount ?? 0,
+      currentAmount: 0,
+      targetDateLabel: targetDateLabel ?? 'Dec 2026',
+      linkedWallet: linkedWallet ?? 'Main Wallet',
+      autoTopupEnabled: autoTopupEnabled ?? false,
+      autoTopupPercent: autoTopupPercent ?? 0,
+      contributions: const [],
+    );
+  }
 
   @override
   Future<GoalData> addContribution(
@@ -108,6 +162,8 @@ class MockGoalsDataSource implements GoalsDataSource {
         currentAmount: 0,
         targetDateLabel: 'Dec 2026',
         linkedWallet: 'Main Wallet',
+        autoTopupEnabled: false,
+        autoTopupPercent: 0,
         contributions: const [],
       ),
     );
@@ -143,6 +199,16 @@ class MockGoalsDataSource implements GoalsDataSource {
     );
     return habit.copyWith(currentCount: 0);
   }
+
+  @override
+  Future<HabitChallenge> updateHabitActive(String id, bool active) async {
+    final seed = await fetch();
+    final habit = seed.habits.firstWhere(
+      (h) => h.id == id,
+      orElse: () => seed.habits.first,
+    );
+    return habit.copyWith(active: active);
+  }
 }
 
 class ApiGoalsDataSource implements GoalsDataSource {
@@ -153,7 +219,14 @@ class ApiGoalsDataSource implements GoalsDataSource {
   @override
   Future<GoalsSeedData> fetch() async {
     final goalsRaw = await _api.goals();
-    final habitsRaw = await _api.habits();
+    final habitsBundle = await _api.habitsBundle();
+    final habitsRaw = (habitsBundle['habits'] as List<Map<String, dynamic>>? ?? const []);
+    final meta = Map<String, dynamic>.from(
+      habitsBundle['meta'] as Map? ?? const {},
+    );
+    final streakMap = Map<String, dynamic>.from(
+      meta['streak'] as Map? ?? const {},
+    );
 
     final goals = goalsRaw.map(_goalFromMap).toList();
     final habits = habitsRaw.map(_habitFromMap).toList();
@@ -162,12 +235,12 @@ class ApiGoalsDataSource implements GoalsDataSource {
       goals: goals,
       habits: habits,
       streak: HabitStreak(
-        currentStreak: habits.where((h) => h.completed).length,
-        longestStreak: habits.where((h) => h.completed).length,
-        lastUpdatedLabel: 'Updated today',
-        badgeTitle: habits.where((h) => h.completed).isEmpty
-            ? 'Consistency Starter'
-            : 'Consistency Builder',
+        currentStreak: asInt(streakMap['current_streak']),
+        longestStreak: asInt(streakMap['longest_streak']),
+        lastUpdatedLabel:
+            streakMap['last_updated_label']?.toString() ?? 'Updated today',
+        badgeTitle:
+            streakMap['badge_title']?.toString() ?? 'Consistency Starter',
       ),
     );
   }
@@ -178,12 +251,16 @@ class ApiGoalsDataSource implements GoalsDataSource {
     required double targetAmount,
     required String targetDateLabel,
     required String linkedWallet,
+    bool autoTopupEnabled = false,
+    double autoTopupPercent = 0,
   }) async {
     final raw = await _api.createGoal({
       'name': name,
       'target_amount': targetAmount,
       'target_date_label': targetDateLabel,
       'linked_wallet': linkedWallet,
+      'auto_topup_enabled': autoTopupEnabled,
+      'auto_topup_percent': autoTopupPercent,
     });
     return _goalFromMap(raw);
   }
@@ -191,6 +268,27 @@ class ApiGoalsDataSource implements GoalsDataSource {
   @override
   Future<void> deleteGoal(String id) async {
     await _api.deleteGoal(id);
+  }
+
+  @override
+  Future<GoalData> updateGoal({
+    required String id,
+    String? name,
+    double? targetAmount,
+    String? targetDateLabel,
+    String? linkedWallet,
+    bool? autoTopupEnabled,
+    double? autoTopupPercent,
+  }) async {
+    final body = <String, dynamic>{};
+    if (name != null) body['name'] = name;
+    if (targetAmount != null) body['target_amount'] = targetAmount;
+    if (targetDateLabel != null) body['target_date_label'] = targetDateLabel;
+    if (linkedWallet != null) body['linked_wallet'] = linkedWallet;
+    if (autoTopupEnabled != null) body['auto_topup_enabled'] = autoTopupEnabled;
+    if (autoTopupPercent != null) body['auto_topup_percent'] = autoTopupPercent;
+    final raw = await _api.updateGoal(id, body);
+    return _goalFromMap(raw);
   }
 
   @override
@@ -216,6 +314,11 @@ class ApiGoalsDataSource implements GoalsDataSource {
     return _habitFromMap(await _api.resetHabit(id));
   }
 
+  @override
+  Future<HabitChallenge> updateHabitActive(String id, bool active) async {
+    return _habitFromMap(await _api.updateHabit(id, {'active': active}));
+  }
+
   GoalData _goalFromMap(Map<String, dynamic> m) {
     final contributionsRaw = (m['contributions'] as List? ?? const []);
     return GoalData(
@@ -225,6 +328,8 @@ class ApiGoalsDataSource implements GoalsDataSource {
       currentAmount: asDouble(m['current_amount']),
       targetDateLabel: m['target_date_label']?.toString() ?? 'Dec 2026',
       linkedWallet: m['linked_wallet']?.toString() ?? 'Main Wallet',
+      autoTopupEnabled: m['auto_topup_enabled'] == true,
+      autoTopupPercent: asDouble(m['auto_topup_percent']),
       contributions: contributionsRaw.whereType<Map>().map((item) {
         final c = Map<String, dynamic>.from(item);
         return GoalContribution(
@@ -253,9 +358,5 @@ class ApiGoalsDataSource implements GoalsDataSource {
 }
 
 final goalsDataSourceProvider = Provider<GoalsDataSource>((ref) {
-  final auth = ref.watch(authControllerProvider);
-  if (auth.status.name != 'authenticated') {
-    return const MockGoalsDataSource();
-  }
   return ApiGoalsDataSource(ref.watch(backendApiServiceProvider));
 });

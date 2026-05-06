@@ -3,6 +3,7 @@ import 'package:confindant/features/home/data/home_data_source.dart';
 import 'package:confindant/features/home/home_page.dart';
 import 'package:confindant/features/home/models/home_models.dart';
 import 'package:confindant/features/home/presentation/widgets/home_quick_actions_card.dart';
+import 'package:confindant/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -22,7 +23,11 @@ void main() {
             const MockGoalsDataSource(),
           ),
         ],
-        child: const MaterialApp(home: Scaffold(body: HomePage())),
+        child: MaterialApp(
+          localizationsDelegates: AppLocalizations.localizationsDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: const Scaffold(body: HomePage()),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -44,7 +49,7 @@ void main() {
     );
 
     expect(find.byKey(const ValueKey('home_empty_view')), findsOneWidget);
-    expect(find.textContaining('Belum ada transaksi'), findsOneWidget);
+    expect(find.textContaining('No transactions yet'), findsOneWidget);
   });
 
   testWidgets('renders error home state', (tester) async {

@@ -52,6 +52,30 @@ class _FakeFinanceApiService extends BackendApiService {
   }
 
   @override
+  Future<List<Map<String, dynamic>>> pagedTransactions({
+    int page = 1,
+    int perPage = 20,
+    String type = 'all',
+    String? walletId,
+    String? fromDate,
+    String? toDate,
+    String? tag,
+    String? queryText,
+  }) async {
+    return [
+      {
+        'id': 't1',
+        'wallet_id': 'w1',
+        'type': 'expense',
+        'merchant_name': 'Cafe',
+        'category': 'Food',
+        'total_amount': 120000,
+        'tags': const ['keluarga'],
+      },
+    ];
+  }
+
+  @override
   Future<Map<String, dynamic>> createWallet(Map<String, dynamic> body) async {
     createWalletCalls++;
     return {'id': 'w2', ...body};

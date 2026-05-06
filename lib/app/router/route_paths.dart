@@ -18,8 +18,11 @@ abstract class RoutePaths {
   static const profileChangePassword = '/profile/change-password';
   static const profileHelpCenter = '/profile/help-center';
   static const profileAbout = '/profile/about';
+  static const profileAiOcrHealth = '/profile/ai-ocr-health';
+  static const profileAiFinanceChat = '/profile/ai-finance-chat';
   static const goals = '/goals';
   static const goalsDetail = '/goals/:id';
   static const analyticsFilter = '/analytics/filter';
   static const analyticsExport = '/analytics/export';
+  static const recurringTransactions = '/recurring-transactions';
 }
