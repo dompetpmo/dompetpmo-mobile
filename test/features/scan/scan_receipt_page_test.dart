@@ -142,6 +142,7 @@ class _FakeWalletViewModel extends WalletViewModel {
       income: 0,
       expense: 0,
       balance: 1000,
+      walletStatsById: {},
       transactionQuery: '',
       transactionTag: '',
       loading: false,
