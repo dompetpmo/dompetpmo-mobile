@@ -921,6 +921,7 @@ class _TopGreetingRow extends StatelessWidget {
           ),
         ),
         Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             AppGlassContainer(
               radius: 15,
@@ -928,21 +929,25 @@ class _TopGreetingRow extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               child: AppIconButtonCircle(
                 icon: Icons.notifications_none_rounded,
-                size: 30,
+                size: 34,
                 backgroundColor: Colors.transparent,
                 iconColor: AppColors.white,
                 onPressed: onNotificationTap,
               ),
             ),
             const SizedBox(width: 6),
-            const AppGlassContainer(
+            AppGlassContainer(
               radius: 15,
               blurSigma: 13.2,
-              padding: EdgeInsets.all(2),
-              child: LanguageSwitcherButton(
-                iconColor: AppColors.white,
-                backgroundColor: Colors.transparent,
-                size: 22,
+              padding: const EdgeInsets.all(2),
+              child: SizedBox(
+                width: 34,
+                height: 34,
+                child: const LanguageSwitcherButton(
+                  iconColor: AppColors.white,
+                  backgroundColor: Colors.transparent,
+                  size: 20,
+                ),
               ),
             ),
           ],

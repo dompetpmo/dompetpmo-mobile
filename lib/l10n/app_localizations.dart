@@ -725,7 +725,7 @@ abstract class AppLocalizations {
   /// No description provided for @profileAiOcrHealth.
   ///
   /// In en, this message translates to:
-  /// **'AI/OCR Health'**
+  /// **'Scan Intelligence'**
   String get profileAiOcrHealth;
 
   /// No description provided for @profileAiFinanceChat.
@@ -1415,7 +1415,7 @@ abstract class AppLocalizations {
   /// No description provided for @aiOcrHealthSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Internal quality metrics'**
+  /// **'Receipt scanning performance metrics'**
   String get aiOcrHealthSubtitle;
 
   /// No description provided for @aiOcrHealthWindow.

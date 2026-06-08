@@ -75,15 +75,6 @@ class AboutPage extends ConsumerWidget {
                   icon: Icons.description_outlined,
                   onTap: () => _showLegal(context, ref, isPrivacy: false),
                 ),
-                const Divider(height: 1),
-                SettingsActionTile(
-                  label: 'Licenses',
-                  subtitle: 'Third-party dependencies',
-                  icon: Icons.gavel_rounded,
-                  onTap: () {
-                    showLicensePage(context: context);
-                  },
-                ),
               ],
             ),
           ),

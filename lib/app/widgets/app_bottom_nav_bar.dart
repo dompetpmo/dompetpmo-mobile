@@ -28,11 +28,22 @@ class AppBottomNavBar extends StatelessWidget {
         children: [
           Positioned.fill(
             top: 3,
-            child: AppGlassContainer(
-              radius: 25,
-              blurSigma: 5,
-              padding: const EdgeInsets.fromLTRB(8, 12.5, 8, 28),
-              child: Row(
+            child: Container(
+              decoration: BoxDecoration(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(25)),
+                boxShadow: [
+                  BoxShadow(
+                    color: AppColors.navy900.withValues(alpha: 0.35),
+                    blurRadius: 24,
+                    offset: const Offset(0, -4),
+                  ),
+                ],
+              ),
+              child: AppGlassContainer(
+                radius: 25,
+                blurSigma: 5,
+                padding: const EdgeInsets.fromLTRB(8, 12.5, 8, 28),
+                child: Row(
                 children: [
                   _item(
                     icon: Icons.home_outlined,
@@ -61,6 +72,7 @@ class AppBottomNavBar extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
             ),
           ),
           Positioned(
@@ -98,6 +110,9 @@ class AppBottomNavBar extends StatelessWidget {
     required bool selected,
     required VoidCallback onTap,
   }) {
+    final color = selected
+        ? AppColors.white
+        : AppColors.white.withValues(alpha: 0.55);
     return Expanded(
       child: InkWell(
         onTap: onTap,
@@ -105,14 +120,14 @@ class AppBottomNavBar extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Icon(icon, color: AppColors.textOnDark, size: 36),
+            Icon(icon, color: color, size: 36),
             Text(
               label,
               style: AppTextStyles.body.copyWith(
-                color: AppColors.textOnDark,
+                color: color,
                 fontSize: 17,
                 height: 22 / 17,
-                fontWeight: FontWeight.w400,
+                fontWeight: selected ? FontWeight.w700 : FontWeight.w400,
               ),
             ),
           ],

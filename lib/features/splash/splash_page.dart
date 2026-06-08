@@ -24,7 +24,16 @@ class _SplashPageState extends ConsumerState<SplashPage> {
   @override
   void initState() {
     super.initState();
+    // Ping the backend immediately to wake Railway from sleep before the user
+    // reaches any screen that needs data. Fire-and-forget — ignore errors.
+    _warmUpBackend();
     _timer = Timer(const Duration(milliseconds: 900), _navigate);
+  }
+
+  void _warmUpBackend() {
+    try {
+      ref.read(backendApiServiceProvider).ping().catchError((_) {});
+    } catch (_) {}
   }
 
   void _navigate() {

@@ -53,12 +53,6 @@ class _RecurringTransactionsPageState extends ConsumerState<RecurringTransaction
                         ),
                       ),
                     ),
-                    AppIconButtonCircle(
-                      icon: Icons.add_rounded,
-                      iconColor: AppColors.white,
-                      backgroundColor: AppColors.white.withValues(alpha: 0.18),
-                      onPressed: _wallets.isEmpty ? null : _showCreateDialog,
-                    ),
                   ],
                 ),
                 const SizedBox(height: 16),
@@ -106,7 +100,7 @@ class _RecurringTransactionsPageState extends ConsumerState<RecurringTransaction
           const SizedBox(height: 12),
           AppPrimaryButton(
             label: 'Tambah Recurring',
-            onPressed: _wallets.isEmpty ? null : _showCreateDialog,
+            onPressed: _showCreateDialog,
             icon: const Icon(Icons.add_rounded, color: AppColors.white, size: 18),
           ),
         ],
@@ -205,8 +199,11 @@ class _RecurringTransactionsPageState extends ConsumerState<RecurringTransaction
     } catch (e) {
       if (!mounted) return;
       setState(() => _loading = false);
+      final msg = e.toString().contains('SocketException') || e.toString().contains('Network')
+          ? 'Tidak bisa terhubung ke server. Pastikan internet aktif dan coba lagi.'
+          : 'Gagal memuat recurring transactions: $e';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to load recurring transactions: $e')),
+        SnackBar(content: Text(msg), duration: const Duration(seconds: 5)),
       );
     }
   }
@@ -240,7 +237,12 @@ class _RecurringTransactionsPageState extends ConsumerState<RecurringTransaction
   }
 
   Future<void> _showCreateDialog({Map<String, dynamic>? existing}) async {
-    if (_wallets.isEmpty) return;
+    if (_wallets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Buat wallet terlebih dahulu')),
+      );
+      return;
+    }
     final isEdit = existing != null;
     final existingWalletId = existing?['wallet_id']?.toString();
     final existingType = existing?['type']?.toString();

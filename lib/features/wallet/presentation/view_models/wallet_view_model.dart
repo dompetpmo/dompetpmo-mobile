@@ -112,16 +112,24 @@ class WalletViewModel extends StateNotifier<WalletScreenState> {
     state = state.copyWith(loading: true);
     try {
       final api = _ref.read(backendApiServiceProvider);
-      final wallets = await api.wallets();
-      final budgets = await api.budgets();
-      var dashboard = await api.dashboard();
-      final allTransactions = await api.transactions();
-      final transactions = await api.pagedTransactions(
-        page: 1,
-        perPage: 30,
-        tag: transactionTag.isEmpty ? null : transactionTag,
-        queryText: transactionQuery.isEmpty ? null : transactionQuery,
-      );
+      // Run all independent API calls in parallel instead of sequentially.
+      final results = await Future.wait([
+        api.wallets(),
+        api.budgets(),
+        api.dashboard(),
+        api.transactions(),
+        api.pagedTransactions(
+          page: 1,
+          perPage: 30,
+          tag: transactionTag.isEmpty ? null : transactionTag,
+          queryText: transactionQuery.isEmpty ? null : transactionQuery,
+        ),
+      ]);
+      final wallets = results[0] as List<Map<String, dynamic>>;
+      final budgets = results[1] as List<Map<String, dynamic>>;
+      var dashboard = results[2] as Map<String, dynamic>;
+      final allTransactions = results[3] as List<Map<String, dynamic>>;
+      final transactions = results[4] as List<Map<String, dynamic>>;
 
       final summary = Map<String, dynamic>.from(
         dashboard['summary'] as Map? ?? const {},

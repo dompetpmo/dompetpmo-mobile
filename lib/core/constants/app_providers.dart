@@ -27,7 +27,7 @@ String _normalizeApiBaseUrl(String raw) {
 
   // Common stale local config: old :4000 endpoint.
   if (uri.host == '10.0.2.2' && uri.port == 4000 && _apiEnvironment == 'dev') {
-    return uri.replace(port: 8000, path: '/api').toString();
+    return uri.replace(port: 8001, path: '/api').toString();
   }
 
   return uri.toString();
@@ -40,7 +40,7 @@ String _defaultApiBaseUrlForEnv() {
     case 'staging':
       return 'https://staging-api.confindant.app/api';
     default:
-      return 'http://10.0.2.2:8000/api';
+      return 'http://10.0.2.2:8001/api';
   }
 }
 

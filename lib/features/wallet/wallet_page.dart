@@ -1,5 +1,6 @@
 import 'package:confindant/app/router/route_paths.dart';
 import 'package:confindant/app/theme/app_colors.dart';
+import 'package:confindant/features/wallet/add_wallet_page.dart';
 import 'package:confindant/app/theme/app_gradients.dart';
 import 'package:confindant/app/theme/app_radius.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
@@ -8,6 +9,7 @@ import 'package:confindant/core/ai/ai_settings_controller.dart';
 import 'package:confindant/core/constants/app_providers.dart';
 import 'package:confindant/l10n/app_localizations.dart';
 import 'package:confindant/core/utils/time_greeting.dart';
+import 'package:confindant/features/category/manage_category_page.dart';
 import 'package:confindant/features/profile/presentation/view_models/profile_settings_view_model.dart';
 import 'package:confindant/features/transactions/transaction_form_dialog.dart';
 import 'package:confindant/features/wallet/presentation/view_models/wallet_view_model.dart';
@@ -42,6 +44,7 @@ class WalletPage extends ConsumerWidget {
         child: SingleChildScrollView(
           padding: const EdgeInsets.fromLTRB(31, 62, 31, 140),
           child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               _WalletTopRow(
                 name: profile.fullName.isEmpty ? 'User' : profile.fullName,
@@ -184,7 +187,7 @@ class WalletPage extends ConsumerWidget {
                       ),
                       backgroundColor: const Color(0xFFE0F6FF),
                       foregroundColor: AppColors.accentAction,
-                      onPressed: () => context.push(RoutePaths.manageCategory),
+                      onPressed: () => ManageCategoryPage.showSheet(context),
                     ),
                     const SizedBox(height: 10),
                     AppSecondaryButton(
@@ -214,9 +217,7 @@ class WalletPage extends ConsumerWidget {
                       ),
                       backgroundColor: const Color(0xFFEFF4FF),
                       foregroundColor: AppColors.accentAction,
-                      onPressed: state.wallets.length < 2
-                          ? null
-                          : () => _showTransferDialog(context, ref, state.wallets),
+                      onPressed: () => _showTransferDialog(context, ref, state.wallets),
                     ),
                     const SizedBox(height: 17),
                     const Divider(height: 1, color: AppColors.divider),
@@ -305,7 +306,7 @@ class WalletPage extends ConsumerWidget {
                   ),
                   backgroundColor: Colors.transparent,
                   foregroundColor: AppColors.accentAction,
-                  onPressed: () => context.push(RoutePaths.addWallet),
+                  onPressed: () => AddWalletPage.showSheet(context),
                 ),
               ),
               if (extraWallets.isNotEmpty) ...[
@@ -340,7 +341,9 @@ class WalletPage extends ConsumerWidget {
                             extraWallets[i],
                           ),
                           onDelete: () async {
-                            final id = extraWallets[i]['id']?.toString() ?? '';
+                            final id = extraWallets[i]['id']?.toString() ??
+                                extraWallets[i]['_id']?.toString() ??
+                                '';
                             if (id.isEmpty) return;
                             await ref
                                 .read(walletViewModelProvider.notifier)
@@ -483,7 +486,9 @@ class WalletPage extends ConsumerWidget {
                           ),
                           IconButton(
                             onPressed: () async {
-                              final id = tx['id']?.toString() ?? '';
+                              final id = tx['id']?.toString() ??
+                                  tx['_id']?.toString() ??
+                                  '';
                               if (id.isEmpty) return;
                               await ref
                                   .read(walletViewModelProvider.notifier)
@@ -563,7 +568,9 @@ class WalletPage extends ConsumerWidget {
             ),
             FilledButton(
               onPressed: () async {
-                final id = wallet['id']?.toString() ?? '';
+                final id = wallet['id']?.toString() ??
+                    wallet['_id']?.toString() ??
+                    '';
                 if (id.isEmpty) return;
                 await ref
                     .read(walletViewModelProvider.notifier)
@@ -593,7 +600,12 @@ class WalletPage extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final aiSettings = ref.read(aiSettingsProvider);
-    if (wallets.isEmpty) return;
+    if (wallets.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Buat wallet terlebih dahulu')),
+      );
+      return;
+    }
     final initialWalletId = preferredWalletId?.trim() ?? '';
     final form = await showTransactionFormDialog(
       context,
@@ -1011,21 +1023,25 @@ class _WalletTopRow extends StatelessWidget {
               padding: const EdgeInsets.all(2),
               child: AppIconButtonCircle(
                 icon: Icons.notifications_none_rounded,
-                size: 30,
+                size: 34,
                 iconColor: AppColors.white,
                 backgroundColor: Colors.transparent,
                 onPressed: onNotificationTap,
               ),
             ),
             const SizedBox(width: 6),
-            const AppGlassContainer(
+            AppGlassContainer(
               radius: 15,
               blurSigma: 13.2,
-              padding: EdgeInsets.all(2),
-              child: LanguageSwitcherButton(
-                iconColor: AppColors.white,
-                backgroundColor: Colors.transparent,
-                size: 22,
+              padding: const EdgeInsets.all(2),
+              child: SizedBox(
+                width: 34,
+                height: 34,
+                child: const LanguageSwitcherButton(
+                  iconColor: AppColors.white,
+                  backgroundColor: Colors.transparent,
+                  size: 20,
+                ),
               ),
             ),
           ],
@@ -1122,13 +1138,16 @@ class _WalletListRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final name = wallet['wallet_name']?.toString() ?? 'Wallet';
     final balance = _parseNumber(wallet['balance']);
-    return Row(
+    return SizedBox(
+      height: 56,
+      child: Row(
       children: [
         Expanded(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: AppTextStyles.label),
+              Text(name, style: AppTextStyles.label, maxLines: 1, overflow: TextOverflow.ellipsis),
               const SizedBox(height: 2),
               Text(
                 formatRupiah(balance),
@@ -1136,6 +1155,7 @@ class _WalletListRow extends StatelessWidget {
                   color: AppColors.textSecondary,
                   fontWeight: FontWeight.w600,
                 ),
+                maxLines: 1,
               ),
             ],
           ),
@@ -1171,6 +1191,7 @@ class _WalletListRow extends StatelessWidget {
           ],
         ),
       ],
+      ),
     );
   }
 

@@ -29,6 +29,12 @@ class BackendApiService {
     return _requireData(json);
   }
 
+  Future<void> ping() async {
+    try {
+      await _client.get('/v1/health');
+    } catch (_) {}
+  }
+
   Future<Map<String, dynamic>> me() async =>
       _requireData(await _client.get('/v1/user'));
 

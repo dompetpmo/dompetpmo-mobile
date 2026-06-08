@@ -1,92 +1,7 @@
 import 'package:confindant/app/theme/app_colors.dart';
-import 'package:confindant/app/theme/app_gradients.dart';
-import 'package:confindant/app/theme/app_radius.dart';
-import 'package:confindant/app/theme/app_spacing.dart';
 import 'package:confindant/app/theme/app_text_styles.dart';
-import 'package:confindant/app/widgets/widgets.dart';
 import 'package:flutter/material.dart';
-
-class CategoryModalShell extends StatelessWidget {
-  const CategoryModalShell({
-    super.key,
-    required this.title,
-    required this.subtitle,
-    required this.child,
-    required this.onClose,
-  });
-
-  final String title;
-  final String subtitle;
-  final Widget child;
-  final VoidCallback onClose;
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.transparent,
-      body: Container(
-        decoration: const BoxDecoration(gradient: AppGradients.appBackground),
-        child: SafeArea(
-          child: Column(
-            children: [
-              const Spacer(),
-              AppCardContainer(
-                radius: AppRadius.md,
-                padding: const EdgeInsets.fromLTRB(24, 16, 24, 20),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        SizedBox(
-                          width: 250.6,
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                title,
-                                style: AppTextStyles.sectionTitle.copyWith(
-                                  fontSize: 24,
-                                  height: 32 / 24,
-                                ),
-                              ),
-                              Text(
-                                subtitle,
-                                style: AppTextStyles.label.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontSize: 14,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const LanguageSwitcherButton(
-                          iconColor: AppColors.accentAction,
-                          size: 22,
-                        ),
-                        IconButton(
-                          onPressed: onClose,
-                          icon: const Icon(
-                            Icons.close_rounded,
-                            color: Color(0xFF99A1AF),
-                            size: 24,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    child,
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
+import 'package:flutter/services.dart';
 
 class CategoryLimitFormCard extends StatelessWidget {
   const CategoryLimitFormCard({
@@ -131,6 +46,7 @@ class CategoryLimitFormCard extends StatelessWidget {
                 child: CategoryLiteInput(
                   controller: limitController,
                   hint: 'Limit (Rp)',
+                  numeric: true,
                 ),
               ),
               const SizedBox(width: 8),
@@ -163,10 +79,12 @@ class CategoryLiteInput extends StatelessWidget {
     super.key,
     required this.controller,
     required this.hint,
+    this.numeric = false,
   });
 
   final TextEditingController controller;
   final String hint;
+  final bool numeric;
 
   @override
   Widget build(BuildContext context) {
@@ -174,6 +92,12 @@ class CategoryLiteInput extends StatelessWidget {
       height: 42,
       child: TextField(
         controller: controller,
+        keyboardType: numeric
+            ? const TextInputType.numberWithOptions(decimal: false)
+            : TextInputType.text,
+        inputFormatters: numeric
+            ? [FilteringTextInputFormatter.digitsOnly]
+            : null,
         style: AppTextStyles.body.copyWith(
           color: AppColors.textPrimary,
           fontSize: 16,

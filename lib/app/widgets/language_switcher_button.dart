@@ -20,7 +20,7 @@ class LanguageSwitcherButton extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     return IconButton(
       tooltip: AppLocalizations.of(context)!.language,
-      icon: Icon(Icons.language_rounded, color: iconColor, size: size),
+      icon: Icon(Icons.translate_rounded, color: iconColor, size: size),
       style: IconButton.styleFrom(backgroundColor: backgroundColor),
       onPressed: () => _openSheet(context, ref),
     );

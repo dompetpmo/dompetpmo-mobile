@@ -332,7 +332,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get profileAboutConfindant => 'About Confindant';
 
   @override
-  String get profileAiOcrHealth => 'AI/OCR Health';
+  String get profileAiOcrHealth => 'Scan Intelligence';
 
   @override
   String get profileAiFinanceChat => 'AI Finance Chat';
@@ -709,7 +709,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get aiChatDeleteUndone => 'Delete canceled.';
 
   @override
-  String get aiOcrHealthSubtitle => 'Internal quality metrics';
+  String get aiOcrHealthSubtitle => 'Receipt scanning performance metrics';
 
   @override
   String get aiOcrHealthWindow => 'Window';
