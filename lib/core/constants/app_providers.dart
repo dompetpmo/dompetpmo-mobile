@@ -35,12 +35,10 @@ String _normalizeApiBaseUrl(String raw) {
 
 String _defaultApiBaseUrlForEnv() {
   switch (_apiEnvironment) {
-    case 'prod':
-      return 'https://api.confindant.app/api';
-    case 'staging':
-      return 'https://staging-api.confindant.app/api';
-    default:
+    case 'local':
       return 'http://10.0.2.2:8001/api';
+    default:
+      return 'https://confindant-production.up.railway.app/api';
   }
 }
 
